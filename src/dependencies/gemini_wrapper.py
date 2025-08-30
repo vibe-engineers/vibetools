@@ -1,6 +1,7 @@
+from typing import Any
 from google import genai
 from dependencies.llm_wrapper import LlmWrapper
-from exceptions import VibeResponseException
+from exceptions import VibeResponseTypeException
 
 class GeminiWrapper(LlmWrapper):
 
@@ -10,12 +11,12 @@ class GeminiWrapper(LlmWrapper):
         self.num_tries = num_tries
 
     def vibe_eval_statement(self, statement: str) -> bool:
-        for i in range(0, self.num_tries):
+        for _ in range(0, self.num_tries):
             response = self.client.models.generate_content(
                 model=self.model, 
                 contents=statement,
                 config=genai.types.GenerateContentConfig(
-                    system_instruction=self._system_instruction
+                    system_instruction=self._eval_statement_instruction
                 )
             )
 
@@ -26,5 +27,22 @@ class GeminiWrapper(LlmWrapper):
             elif "false" in output_text:
                 return False
 
-        raise VibeResponseException
+        raise VibeResponseTypeException
+
+    def vibe_call_function(self, func_signature: str, docstring: str, *args, **kwargs) -> Any:
+        prompt = f"""
+        Function Signature: {func_signature}
+        Docstring: {docstring}
+        Arguments: {args}, {kwargs}
+        """
+
+        response = self.client.models.generate_content(
+            model=self.model, 
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                system_instruction=self._call_function_instruction
+            )
+        )
+
+        return response.text.strip()
 

@@ -1,3 +1,5 @@
+import inspect
+from typing import Any, Callable
 from openai import OpenAI
 from google import genai
 
@@ -18,5 +20,14 @@ class VibeCheck:
         else:
             raise VibeClientException("Client must be an instance of openai.OpenAI or genai.Client")
 
-    def __call__(self, statement: str) -> bool:
-        return self.llm.vibe_eval_statement(statement)
+    def __call__(self, arg: str | Callable[..., Any]) -> bool | Callable[..., Any]:
+        if isinstance(arg, str):
+            return self.llm.vibe_eval_statement(arg)
+        elif callable(arg):
+            def wrapper(*args, **kwargs):
+                func_signature = str(inspect.signature(arg))
+                docstring = inspect.getdoc(arg)
+                return self.llm.vibe_call_function(func_signature, docstring, *args, **kwargs)
+            return wrapper
+        else:
+            raise VibeInputTypeError("Argument must be a string or a callable")

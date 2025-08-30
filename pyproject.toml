@@ -8,6 +8,11 @@ include = ["src/**"]
 [tool.hatch.build.targets.wheel.sources]
 "src" = ""
 
+[tool.hatch.envs.default.scripts]
+lint = "darglint ./src/bot && ruff check --fix ./src/bot && black --check ./src/bot"
+format = "ruff check --fix ./src/bot && black ./src/bot"
+test = "pytest ./tests/test.py"
+
 [tool.pytest.ini_options]
 pythonpath = [
   ".", "src",
@@ -32,3 +37,22 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/konglyyy/vibechecks"
 Issues = "https://github.com/konglyyy/vibechecks/issues"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = ["build", "dist", ".venv"]
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "D", "I"]
+ignore = ["D200", "D203", "D205", "D212"]
+fixable = ["ALL"]
+
+[tool.darglint]
+docstring_style = "google"
+strictness = "long"
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
