@@ -1,11 +1,12 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import os
 
 from google import genai
-from dotenv import load_dotenv
 
 from vibechecks import VibeCheck
-
-load_dotenv()
 
 # create a google gemini client (an openai client works as well)
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -30,6 +31,7 @@ def add_number(num1: int, num2: int) -> int:
 
     Returns:
         int: The sum of the two numbers.
+
     """
     pass
 
