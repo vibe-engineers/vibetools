@@ -1,22 +1,22 @@
-"""A wrapper for the OpenAI API."""
+"""A wrapper for the Gemini API."""
 
 from typing import Any
 
-from openai import OpenAI
+from google import genai
 
-from dependencies.llm_wrapper import LlmWrapper
-from exceptions import VibeResponseTypeException
+from llms.llm_wrapper import LlmWrapper
+from models.exceptions import VibeResponseTypeException
 
 
-class OpenAiWrapper(LlmWrapper):
-    """A wrapper for the OpenAI API."""
+class GeminiWrapper(LlmWrapper):
+    """A wrapper for the Gemini API."""
 
-    def __init__(self, client: OpenAI, model: str, num_tries: int):
+    def __init__(self, client: genai.Client, model: str, num_tries: int):
         """
-        Initialize the OpenAI wrapper.
+        Initialize the Gemini wrapper.
 
         Args:
-            client: The OpenAI client.
+            client: The Gemini client.
             model: The model to use.
             num_tries: The number of times to try the request.
 
@@ -40,20 +40,20 @@ class OpenAiWrapper(LlmWrapper):
 
         """
         for _ in range(0, self.num_tries):
-            response = self.client.responses.create(
+            response = self.client.models.generate_content(
                 model=self.model,
-                instructions=self._eval_statement_instruction,
-                input=statement,
+                contents=statement,
+                config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
             )
 
-            output_text = response.output_text.lower().strip()
+            output_text = response.text.lower().strip()
 
             if "true" in output_text:
                 return True
             elif "false" in output_text:
                 return False
 
-        raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")
+        raise VibeResponseTypeException("Unable to get a valid response from the Gemini API.")
 
     def vibe_call_function(self, func_signature: str, docstring: str, *args, **kwargs) -> Any:
         """
@@ -75,10 +75,10 @@ class OpenAiWrapper(LlmWrapper):
         Arguments: {args}, {kwargs}
         """
 
-        response = self.client.responses.create(
+        response = self.client.models.generate_content(
             model=self.model,
-            instructions=self._call_function_instruction,
-            input=prompt,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
         )
 
-        return response.output_text.strip()
+        return response.text.strip()

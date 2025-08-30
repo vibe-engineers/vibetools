@@ -6,9 +6,9 @@ from typing import Any, Callable
 from google import genai
 from openai import OpenAI
 
-from dependencies.gemini_wrapper import GeminiWrapper
-from dependencies.openai_wrapper import OpenAiWrapper
-from exceptions import VibeClientException, VibeInputTypeException
+from llms.gemini_wrapper import GeminiWrapper
+from llms.openai_wrapper import OpenAiWrapper
+from models.exceptions import VibeClientException, VibeInputTypeException
 
 
 class VibeCheck:
