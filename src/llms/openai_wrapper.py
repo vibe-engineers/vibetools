@@ -41,6 +41,7 @@ class OpenAiWrapper(LlmWrapper):
 
         """
         for _ in range(0, self.num_tries):
+            # TODO: errors can be thrown in this loop, catch it
             console_logger.debug(f"Attempt #{_ + 1}: {statement}")
             response = self.client.responses.create(
                 model=self.model,
@@ -77,12 +78,16 @@ class OpenAiWrapper(LlmWrapper):
         Docstring: {docstring}
         Arguments: {args}, {kwargs}
         """
-        console_logger.debug(f"Function call prompt: {prompt}")
-        response = self.client.responses.create(
-            model=self.model,
-            instructions=self._call_function_instruction,
-            input=prompt,
-        )
-        console_logger.debug(f"Function call response: {response.output_text.strip()}")
+        for _ in range(0, self.num_tries):
+            # TODO: errors can be thrown in this loop, catch it
+            console_logger.debug(f"Function call prompt: {prompt}")
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=self._call_function_instruction,
+                input=prompt,
+            )
+            console_logger.debug(f"Function call response: {response.output_text.strip()}")
 
-        return response.output_text.strip()
+            return response.output_text.strip()
+        
+        raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")

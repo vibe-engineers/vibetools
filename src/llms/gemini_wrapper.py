@@ -41,6 +41,7 @@ class GeminiWrapper(LlmWrapper):
 
         """
         for _ in range(0, self.num_tries):
+            # TODO: errors can be thrown in this loop, catch it
             console_logger.debug(f"Attempt #{_ + 1}: {statement}")
             response = self.client.models.generate_content(
                 model=self.model,
@@ -77,12 +78,16 @@ class GeminiWrapper(LlmWrapper):
         Docstring: {docstring}
         Arguments: {args}, {kwargs}
         """
-        console_logger.debug(f"Function call prompt: {prompt}")
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=prompt,
-            config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
-        )
-        console_logger.debug(f"Function call response: {response.text.strip()}")
+        for _ in range(0, self.num_tries):
+            # TODO: errors can be thrown in this loop, catch it
+            console_logger.debug(f"Function call prompt: {prompt}")
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
+            )
+            console_logger.debug(f"Function call response: {response.text.strip()}")
 
-        return response.text.strip()
+            return response.text.strip()
+        
+        raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")
