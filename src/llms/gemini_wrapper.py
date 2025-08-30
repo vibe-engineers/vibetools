@@ -1,6 +1,6 @@
 """A wrapper for the Gemini API."""
 
-from typing import Any
+from typing import Any, Optional
 
 from google import genai
 
@@ -40,9 +40,9 @@ class GeminiWrapper(LlmWrapper):
             VibeResponseTypeException: If the API is unable to provide a valid response.
 
         """
-        for _ in range(0, self.num_tries):
+        for attempt in range(1, self.num_tries + 1):
             # TODO: errors can be thrown in this loop, catch it
-            console_logger.debug(f"Attempt #{_ + 1}: {statement}")
+            console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] {statement}")
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=statement,
@@ -54,12 +54,14 @@ class GeminiWrapper(LlmWrapper):
 
             if "true" in output_text:
                 return True
-            elif "false" in output_text:
+            if "false" in output_text:
                 return False
 
         raise VibeResponseTypeException("Unable to get a valid response from the Gemini API.")
 
-    def vibe_call_function(self, func_signature: str, docstring: str, *args, **kwargs) -> Any:
+    def vibe_call_function(
+        self, func_signature: str, docstring: str, *args, response_type: Optional[type] = None, **kwargs
+    ) -> Any:
         """
         Call a function and returns the result.
 
@@ -67,27 +69,49 @@ class GeminiWrapper(LlmWrapper):
             func_signature: The function signature.
             docstring: The function's docstring.
             *args: The function's arguments.
+            response_type: (Optional) Expected Python type for the response. If provided,
+                the wrapper will validate (and attempt to coerce) LLM output to this type.
             **kwargs: The function's keyword arguments.
 
         Returns:
             The result of the function call.
 
+        Raises:
+            VibeResponseTypeException: If the API is unable to provide a valid response
+            that matches the expected type within the configured number of tries.
+
         """
+        return_type_line = (
+            f"\nReturn Type: {getattr(response_type, '__name__', str(response_type))}" if response_type else ""
+        )
         prompt = f"""
         Function Signature: {func_signature}
         Docstring: {docstring}
-        Arguments: {args}, {kwargs}
-        """
-        for _ in range(0, self.num_tries):
-            # TODO: errors can be thrown in this loop, catch it
-            console_logger.debug(f"Function call prompt: {prompt}")
+        Arguments: {args}, {kwargs}{return_type_line}
+        """.strip()
+
+        for attempt in range(1, self.num_tries + 1):
+            # TODO: errors can be thrown in this loop, catch and continue if desired
+            console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] Function call prompt: {prompt}")
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=prompt,
                 config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
             )
-            console_logger.debug(f"Function call response: {response.text.strip()}")
+            raw_text = response.text.strip()
+            console_logger.debug(f"Function call raw response: {raw_text}")
 
-            return response.text.strip()
-        
-        raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")
+            # if no response_type was specified (no @vibeformat), keep behavior unchanged.
+            if response_type is None:
+                return raw_text
+
+            # otherwise, enforce the type with shared helpers.
+            value = self._maybe_coerce(raw_text, response_type)
+            if self._is_match(value, response_type):
+                return value
+
+            console_logger.debug("Response did not match expected type; retrying...")
+
+        raise VibeResponseTypeException(
+            f"Unable to get a valid response matching {response_type!r} from the Gemini API."
+        )

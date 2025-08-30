@@ -85,10 +85,14 @@ class VibeCheck:
         elif callable(arg):
             console_logger.info(f"Performing vibe check on function: '{arg.__name__}'")
 
+            expected_type = getattr(arg, "_vibe_response_type", None)
+
             def wrapper(*args, **kwargs):
                 func_signature = str(inspect.signature(arg))
                 docstring = inspect.getdoc(arg)
-                return self.llm.vibe_call_function(func_signature, docstring, *args, **kwargs)
+                return self.llm.vibe_call_function(
+                    func_signature, docstring, *args, **kwargs, response_type=expected_type
+                )
 
             return wrapper
         else:
