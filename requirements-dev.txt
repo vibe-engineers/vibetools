@@ -4,3 +4,4 @@ black==25.1.0
 hatch==1.14.0
 ruff==0.11.2
 darglint==1.8.1
+python-dotenv==1.1.1

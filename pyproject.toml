@@ -9,8 +9,8 @@ include = ["src/**"]
 "src" = ""
 
 [tool.hatch.envs.default.scripts]
-lint = "darglint ./src/bot && ruff check --fix ./src/bot && black --check ./src/bot"
-format = "ruff check --fix ./src/bot && black ./src/bot"
+lint = "darglint ./src && ruff check --fix ./src && black --check ./src"
+format = "ruff check --fix ./src && black ./src"
 test = "pytest ./tests/test.py"
 
 [tool.pytest.ini_options]

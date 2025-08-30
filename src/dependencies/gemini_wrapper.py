@@ -1,7 +1,10 @@
 from typing import Any
+
 from google import genai
+
 from dependencies.llm_wrapper import LlmWrapper
 from exceptions import VibeResponseTypeException
+
 
 class GeminiWrapper(LlmWrapper):
 

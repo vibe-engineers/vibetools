@@ -1,11 +1,14 @@
 from typing import Any
+
 from openai import OpenAI
+
 from dependencies.llm_wrapper import LlmWrapper
 from exceptions import VibeResponseTypeException
 
+
 class OpenAiWrapper(LlmWrapper):
 
-    def __init__(self, client: OpenAI, model: str, num_tries: str):
+    def __init__(self, client: OpenAI, model: str, num_tries: int):
         self.client = client
         self.model = model
         self.num_tries = num_tries

@@ -1,11 +1,13 @@
 import inspect
 from typing import Any, Callable
-from openai import OpenAI
-from google import genai
 
-from dependencies.openai_wrapper import OpenAiWrapper
+from google import genai
+from openai import OpenAI
+
 from dependencies.gemini_wrapper import GeminiWrapper
-from exceptions import VibeClientException
+from dependencies.openai_wrapper import OpenAiWrapper
+from exceptions import VibeClientException, VibeInputTypeException
+
 
 class VibeCheck:
 
@@ -30,4 +32,4 @@ class VibeCheck:
                 return self.llm.vibe_call_function(func_signature, docstring, *args, **kwargs)
             return wrapper
         else:
-            raise VibeInputTypeError("Argument must be a string or a callable")
+            raise VibeInputTypeException("Argument must be a string or a callable")
