@@ -17,7 +17,7 @@
 
 ### Introduction
 **VibeChecks** is a lightweight python package that allows users to use natural language (LLMs) as part of their code logic. For example, **VibeChecks** can be used to check if/loop statements as well as provide responses for functions that are described but not implemented. It supports OpenAI and Google Gemini client currently and asimple example illustrating how it can be used can be seen below:
-```
+```python
 from google import genai
 from vibechecks import VibeCheck
 
@@ -36,7 +36,7 @@ else:
 ```
 
 **VibeChecks** is published on [**pypi**](https://pypi.org/project/vibechecks/) and can be easily installed with:
-```
+```bash
 python3 -m pip install vibechecks
 ```
 Details on the usage of the package and available APIs can be found on the [**wiki page**](https://github.com/konglyyy/vibechecks/wiki).
