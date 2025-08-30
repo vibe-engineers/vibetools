@@ -63,22 +63,26 @@ class OpenAiWrapper(LlmWrapper):
         self, func_signature: str, docstring: str, *args, response_type: Optional[type] = None, **kwargs
     ) -> Any:
         """
-        Call a function and returns the result.
+        Call a function and return the LLM-evaluated result.
+
+        Builds a structured prompt from the provided signature, docstring, and arguments,
+        queries the OpenAI API, and optionally enforces the output's Python type.
 
         Args:
-            func_signature: The function signature.
-            docstring: The function's docstring.
-            *args: The function's arguments.
-            response_type: (Optional) Expected Python type for the response. If provided,
-                the wrapper will validate (and attempt to coerce) LLM output to this type.
-            **kwargs: The function's keyword arguments.
+            func_signature (str): The function signature being invoked (e.g. ``"def f(x: int) -> bool:"``).
+            docstring (str): The function's docstring used to give additional context to the model.
+            *args: Positional arguments to include in the call.
+            response_type (Optional[type]): Expected Python type for the response. If provided,
+                the output will be coerced and validated against this type.
+            **kwargs: Keyword arguments to include in the call.
 
         Returns:
-            The result of the function call.
+            Any: If ``response_type`` is ``None``, returns the raw text response as ``str``.
+            Otherwise, returns the value coerced to ``response_type`` on success.
 
         Raises:
-            VibeResponseTypeException: If the API is unable to provide a valid response
-            that matches the expected type within the configured number of tries.
+            VibeResponseTypeException: If the model fails to produce a valid response matching
+                ``response_type`` (when specified) within the configured number of tries.
 
         """
         return_type_line = (

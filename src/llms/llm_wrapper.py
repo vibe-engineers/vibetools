@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, get_args, get_origin
+
 from utils.logger import console_logger
 
 
@@ -217,9 +218,7 @@ class LlmWrapper(ABC):
         if origin is tuple and args:
             if len(args) == len(value):
                 ok = all(isinstance(v, t) for v, t in zip(value, args))
-                console_logger.debug(
-                    f"_is_match: origin=tuple; arity={len(args)}; exact-arity match={ok}"
-                )
+                console_logger.debug(f"_is_match: origin=tuple; arity={len(args)}; exact-arity match={ok}")
                 return ok
             if len(args) == 2 and args[1] is Ellipsis:
                 ok = all(isinstance(v, args[0]) for v in value)
@@ -227,9 +226,7 @@ class LlmWrapper(ABC):
                     f"_is_match: origin=tuple; variadic_of={getattr(args[0], '__name__', str(args[0]))}; match={ok}"
                 )
                 return ok
-            console_logger.debug(
-                f"_is_match: origin=tuple; arity-mismatch; expected={len(args)}; got={len(value)}"
-            )
+            console_logger.debug(f"_is_match: origin=tuple; arity-mismatch; expected={len(args)}; got={len(value)}")
             return False
 
         if origin is dict and len(args) == 2:
@@ -242,13 +239,21 @@ class LlmWrapper(ABC):
             return ok
 
         console_logger.debug(
-            f"_is_match: origin={getattr(origin, '__name__', str(origin))}; "
-            f"no specific handler; defaulting to True"
+            f"_is_match: origin={getattr(origin, '__name__', str(origin))}; " f"no specific handler; defaulting to True"
         )
         return True
 
 
 @lru_cache(maxsize=256)
 def _dataclass_field_names(dc: type) -> set[str]:
-    """Cache dataclass field names to avoid repeated reflection."""
+    """
+    Cache dataclass field names to avoid repeated reflection.
+
+    Args:
+        dc: The dataclass type to inspect.
+
+    Returns:
+        set[str]: A set of field names for the dataclass.
+
+    """
     return {f.name for f in fields(dc)}
