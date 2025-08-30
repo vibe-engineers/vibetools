@@ -9,6 +9,7 @@ from openai import OpenAI
 from llms.gemini_wrapper import GeminiWrapper
 from llms.openai_wrapper import OpenAiWrapper
 from models.exceptions import VibeClientException, VibeInputTypeException
+from utils.logger import console_logger
 
 
 class VibeCheck:
@@ -19,7 +20,13 @@ class VibeCheck:
     the logical validity of a statement or the outcome of a function call.
     """
 
-    def __init__(self, client: OpenAI | genai.Client, model: str, num_tries: int = 1):
+    def __init__(
+        self,
+        client: OpenAI | genai.Client,
+        model: str,
+        *,
+        num_tries: int = 1,
+    ) -> None:
         """
         Initialize the VibeCheck object.
 
@@ -46,8 +53,10 @@ class VibeCheck:
         """
         if isinstance(client, OpenAI):
             self.llm = OpenAiWrapper(client, model, num_tries)
+            console_logger.info(f"Loaded OpenAI wrapper with model: {model}")
         elif isinstance(client, genai.Client):
             self.llm = GeminiWrapper(client, model, num_tries)
+            console_logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
             raise VibeClientException("Client must be an instance of openai.OpenAI or genai.Client")
 
@@ -71,8 +80,10 @@ class VibeCheck:
 
         """
         if isinstance(arg, str):
+            console_logger.info(f"Performing vibe check on statement: {arg}")
             return self.llm.vibe_eval_statement(arg)
         elif callable(arg):
+            console_logger.info(f"Performing vibe check on function: '{arg.__name__}'")
 
             def wrapper(*args, **kwargs):
                 func_signature = str(inspect.signature(arg))

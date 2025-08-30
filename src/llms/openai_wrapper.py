@@ -6,6 +6,7 @@ from openai import OpenAI
 
 from llms.llm_wrapper import LlmWrapper
 from models.exceptions import VibeResponseTypeException
+from utils.logger import console_logger
 
 
 class OpenAiWrapper(LlmWrapper):
@@ -40,6 +41,7 @@ class OpenAiWrapper(LlmWrapper):
 
         """
         for _ in range(0, self.num_tries):
+            console_logger.debug(f"Attempt #{_ + 1}: {statement}")
             response = self.client.responses.create(
                 model=self.model,
                 instructions=self._eval_statement_instruction,
@@ -47,6 +49,7 @@ class OpenAiWrapper(LlmWrapper):
             )
 
             output_text = response.output_text.lower().strip()
+            console_logger.debug(f"Response: {output_text}")
 
             if "true" in output_text:
                 return True
@@ -74,11 +77,12 @@ class OpenAiWrapper(LlmWrapper):
         Docstring: {docstring}
         Arguments: {args}, {kwargs}
         """
-
+        console_logger.debug(f"Function call prompt: {prompt}")
         response = self.client.responses.create(
             model=self.model,
             instructions=self._call_function_instruction,
             input=prompt,
         )
+        console_logger.debug(f"Function call response: {response.output_text.strip()}")
 
         return response.output_text.strip()
