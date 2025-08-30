@@ -1,24 +1,30 @@
-class GeminiWrapper:
+from google import genai
+from dependencies.llm_wrapper import LlmWrapper
+from exceptions import VibeResponseException
 
-    def __init__(self, client: genai.client, model: str, num_tries: int):
+class GeminiWrapper(LlmWrapper):
+
+    def __init__(self, client: genai.Client, model: str, num_tries: int):
         self.client = client
         self.model = model
         self.num_tries = num_tries
 
-    def vibe_eval_statement(self, statement: str, fallback: bool = False) -> bool:
+    def vibe_eval_statement(self, statement: str) -> bool:
         for i in range(0, self.num_tries):
             response = self.client.models.generate_content(
                 model=self.model, 
                 contents=statement,
-                config=types.GenerateContentConfig(
-                    # TODO : consider abstracting this into the llmWrapper class to reduce duplication across wrappers
-                    system_instruction="Evaluate the statement below and respond with either 'true' or 'false'."
+                config=genai.types.GenerateContentConfig(
+                    system_instruction=self._system_instruction
                 )
             )
 
-            # print(response.text)
+            output_text = response.text.lower().strip()
 
-            # TODO: check if response.output_text is true or false and convert to boolean to return
-            # if not, keep trying again until num tries is exceeded
+            if "true" in output_text:
+                return True
+            elif "false" in output_text:
+                return False
 
-        return fallback
+        raise VibeResponseException
+

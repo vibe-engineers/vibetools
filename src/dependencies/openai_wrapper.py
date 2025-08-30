@@ -1,19 +1,27 @@
-class OpenAiWrapper:
+from openai import OpenAI
+from dependencies.llm_wrapper import LlmWrapper
+from exceptions import VibeResponseException
+
+class OpenAiWrapper(LlmWrapper):
 
     def __init__(self, client: OpenAI, model: str, num_tries: str):
         self.client = client
         self.model = model
         self.num_tries = num_tries
 
-    def vibe_eval_statement(self, statement: str, fallback: bool = False) -> bool:
+    def vibe_eval_statement(self, statement: str) -> bool:
         for i in range(0, self.num_tries):
             response = self.client.responses.create(
                 model=self.model,
-                instructions="Evaluate the statement below and respond with either 'true' or 'false'.",
+                instructions=self._system_instruction,
                 input=statement,
             )
 
-            # TODO: check if response.output_text is true or false and convert to boolean to return
-            # if not, keep trying again until num tries is exceeded
+            output_text = response.output_text.lower().strip()
 
-        return fallback
+            if "true" in output_text:
+                return True
+            elif "false" in output_text:
+                return False
+
+        raise VibeResponseException
