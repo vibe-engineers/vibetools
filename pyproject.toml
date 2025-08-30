@@ -25,7 +25,7 @@ authors = [
   { name="tjtanjin", email="cjtanjin@gmail.com" },
   { name="konglyyy", email="kongleyi99@gmail.com" },
 ]
-description = "A python package that uses LLMs to insanity-check of if/while conditions for logic."
+description = "Bring vibes into your code: LLM-powered if-statements, loops, and functions."
 readme = "README.md"
 requires-python = ">=3.0"
 classifiers = [
