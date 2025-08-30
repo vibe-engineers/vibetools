@@ -1,3 +1,5 @@
+"""A wrapper for the OpenAI API."""
+
 from typing import Any
 
 from openai import OpenAI
@@ -7,13 +9,36 @@ from exceptions import VibeResponseTypeException
 
 
 class OpenAiWrapper(LlmWrapper):
+    """A wrapper for the OpenAI API."""
 
     def __init__(self, client: OpenAI, model: str, num_tries: int):
+        """
+        Initialize the OpenAI wrapper.
+
+        Args:
+            client: The OpenAI client.
+            model: The model to use.
+            num_tries: The number of times to try the request.
+
+        """
         self.client = client
         self.model = model
         self.num_tries = num_tries
 
     def vibe_eval_statement(self, statement: str) -> bool:
+        """
+        Evaluate a statement and returns a boolean.
+
+        Args:
+            statement: The statement to evaluate.
+
+        Returns:
+            A boolean indicating whether the statement is true or false.
+
+        Raises:
+            VibeResponseTypeException: If the API is unable to provide a valid response.
+
+        """
         for _ in range(0, self.num_tries):
             response = self.client.responses.create(
                 model=self.model,
@@ -28,9 +53,22 @@ class OpenAiWrapper(LlmWrapper):
             elif "false" in output_text:
                 return False
 
-        raise VibeResponseTypeException
-    
+        raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")
+
     def vibe_call_function(self, func_signature: str, docstring: str, *args, **kwargs) -> Any:
+        """
+        Call a function and returns the result.
+
+        Args:
+            func_signature: The function signature.
+            docstring: The function's docstring.
+            *args: The function's arguments.
+            **kwargs: The function's keyword arguments.
+
+        Returns:
+            The result of the function call.
+
+        """
         prompt = f"""
         Function Signature: {func_signature}
         Docstring: {docstring}
