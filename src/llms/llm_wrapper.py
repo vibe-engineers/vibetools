@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, get_args, get_origin
+from utils.logger import console_logger
 
 
 class LlmWrapper(ABC):
@@ -85,20 +86,33 @@ class LlmWrapper(ABC):
             The coerced value when possible, otherwise the original raw_text or parsed JSON.
 
         """
-        if not expected or expected is str:
+        if not expected:
+            console_logger.debug("_maybe_coerce: no expected type; returning raw_text unchanged")
+            return raw_text
+        if expected is str:
+            console_logger.debug("_maybe_coerce: expected is str; returning raw_text unchanged")
             return raw_text
 
         # Only parse JSON when a non-str type is requested.
         try:
             parsed = json.loads(raw_text)
-        except Exception:
+            console_logger.debug(f"_maybe_coerce: JSON parsed successfully (type={type(parsed).__name__})")
+        except Exception as e:
+            console_logger.debug(f"_maybe_coerce: JSON parse failed: {e}; returning raw_text")
             return raw_text
 
         # Dataclasses
         if inspect.isclass(expected) and is_dataclass(expected) and isinstance(parsed, dict):
             try:
-                return expected(**{k: v for k, v in parsed.items() if k in _dataclass_field_names(expected)})
-            except Exception:
+                field_names = _dataclass_field_names(expected)
+                subset = {k: v for k, v in parsed.items() if k in field_names}
+                console_logger.debug(
+                    f"_maybe_coerce: constructing dataclass {expected.__name__} "
+                    f"from {len(subset)}/{len(parsed)} keys"
+                )
+                return expected(**subset)
+            except Exception as e:
+                console_logger.debug(f"_maybe_coerce: dataclass construction failed: {e}; returning parsed dict")
                 return parsed  # fall back to parsed JSON; will be validated by _is_match
 
         # Optional Pydantic (lazy import)
@@ -107,12 +121,16 @@ class LlmWrapper(ABC):
 
             if inspect.isclass(expected) and issubclass(expected, BaseModel) and isinstance(parsed, dict):
                 try:
+                    console_logger.debug(f"_maybe_coerce: constructing pydantic model {expected.__name__}")
                     return expected(**parsed)
-                except Exception:
+                except Exception as e:
+                    console_logger.debug(f"_maybe_coerce: pydantic construction failed: {e}; returning parsed dict")
                     return parsed
         except Exception:
+            # No pydantic installed or import error; silently ignore
             pass
 
+        console_logger.debug(f"_maybe_coerce: returning parsed JSON (type={type(parsed).__name__})")
         return parsed
 
     def _is_match(self, value: Any, expected: Optional[type]) -> bool:
@@ -136,9 +154,12 @@ class LlmWrapper(ABC):
 
         """
         if not expected:
+            console_logger.debug("_is_match: no expected type; trivially matches")
             return True
         if expected is str:
-            return isinstance(value, str)
+            ok = isinstance(value, str)
+            console_logger.debug(f"_is_match: expected=str; got={type(value).__name__}; match={ok}")
+            return ok
 
         # Pydantic / dataclass / normal classes
         if isinstance(expected, type):
@@ -146,35 +167,84 @@ class LlmWrapper(ABC):
                 from pydantic import BaseModel  # type: ignore
 
                 if issubclass(expected, BaseModel):
-                    return isinstance(value, expected)
+                    ok = isinstance(value, expected)
+                    console_logger.debug(
+                        f"_is_match: expected=pydantic({expected.__name__}); got={type(value).__name__}; match={ok}"
+                    )
+                    return ok
             except Exception:
+                # pydantic not available; continue
                 pass
+
             if is_dataclass(expected):
-                return isinstance(value, expected)
-            return isinstance(value, expected)
+                ok = isinstance(value, expected)
+                console_logger.debug(
+                    f"_is_match: expected=dataclass({expected.__name__}); got={type(value).__name__}; match={ok}"
+                )
+                return ok
+
+            ok = isinstance(value, expected)
+            console_logger.debug(
+                f"_is_match: expected=class({expected.__name__}); got={type(value).__name__}; match={ok}"
+            )
+            return ok
 
         # typing constructs (List[T], Dict[K,V], Tuple[...])
         origin = get_origin(expected)
         if origin is None:
-            return isinstance(value, expected)
+            ok = isinstance(value, expected)
+            console_logger.debug(
+                f"_is_match: expected=typing-unknown; origin=None; got={type(value).__name__}; match={ok}"
+            )
+            return ok
 
         if not isinstance(value, origin):
+            console_logger.debug(
+                f"_is_match: origin={getattr(origin, '__name__', str(origin))}; "
+                f"value is not instance of origin; got={type(value).__name__}"
+            )
             return False
 
         args = get_args(expected)
         if origin is list and args:
             (elem_t,) = args
-            return all(isinstance(x, elem_t) for x in value)
+            ok = all(isinstance(x, elem_t) for x in value)
+            console_logger.debug(
+                f"_is_match: origin=list; elem_t={getattr(elem_t, '__name__', str(elem_t))}; match={ok}"
+            )
+            return ok
+
         if origin is tuple and args:
             if len(args) == len(value):
-                return all(isinstance(v, t) for v, t in zip(value, args))
+                ok = all(isinstance(v, t) for v, t in zip(value, args))
+                console_logger.debug(
+                    f"_is_match: origin=tuple; arity={len(args)}; exact-arity match={ok}"
+                )
+                return ok
             if len(args) == 2 and args[1] is Ellipsis:
-                return all(isinstance(v, args[0]) for v in value)
+                ok = all(isinstance(v, args[0]) for v in value)
+                console_logger.debug(
+                    f"_is_match: origin=tuple; variadic_of={getattr(args[0], '__name__', str(args[0]))}; match={ok}"
+                )
+                return ok
+            console_logger.debug(
+                f"_is_match: origin=tuple; arity-mismatch; expected={len(args)}; got={len(value)}"
+            )
             return False
+
         if origin is dict and len(args) == 2:
             k_t, v_t = args
-            return all(isinstance(k, k_t) and isinstance(v, v_t) for k, v in value.items())
+            ok = all(isinstance(k, k_t) and isinstance(v, v_t) for k, v in value.items())
+            console_logger.debug(
+                f"_is_match: origin=dict; key_t={getattr(k_t, '__name__', str(k_t))}, "
+                f"val_t={getattr(v_t, '__name__', str(v_t))}; match={ok}"
+            )
+            return ok
 
+        console_logger.debug(
+            f"_is_match: origin={getattr(origin, '__name__', str(origin))}; "
+            f"no specific handler; defaulting to True"
+        )
         return True
 
 
