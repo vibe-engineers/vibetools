@@ -1,0 +1,35 @@
+name: CI/CD Status
+run-name: Full CI/CD Pipeline
+
+on:
+  push:
+    # Triggers on pushes to main/development branches.
+    branches: ["main", "development"]
+    paths-ignore:
+      - "*.md"
+      - "assets/**"
+      - "docs/**"
+      - ".github/**/*.md"
+      - ".github/FUNDING.yml"
+      - ".gitignore"
+  pull_request:
+    # Triggers on pull requests to main/development branches.
+    branches: ["main", "development"]
+    paths-ignore:
+      - "*.md"
+      - "assets/**"
+      - "docs/**"
+      - ".github/**/*.md"
+      - ".github/FUNDING.yml"
+      - ".gitignore"
+  workflow_dispatch:
+    # Allows manual triggering of the workflow.
+
+jobs:
+  trigger-full-ci:
+    # Triggers the full CI/CD pipeline.
+    name: CI
+    uses: ./.github/workflows/lint-build-test.yml
+    with:
+      target_env: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/development' && 'development' || 'invalid' }}
+    secrets: inherit
