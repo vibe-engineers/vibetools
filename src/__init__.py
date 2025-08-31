@@ -2,6 +2,5 @@
 
 from models.exceptions import VibeClientException, VibeInputTypeException, VibeResponseTypeException
 from vibechecks import VibeCheck
-from vibeformat import vibeformat
 
-__all__ = ["VibeCheck", "vibeformat", "VibeClientException", "VibeInputTypeException", "VibeResponseTypeException"]
+__all__ = ["VibeCheck", "VibeClientException", "VibeInputTypeException", "VibeResponseTypeException"]

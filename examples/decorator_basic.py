@@ -19,7 +19,6 @@ vc = VibeCheck(client, model="gemini-2.0-flash-lite")
 # the example below vibe evaluates the result of the add_number function
 # tip #1: be descriptive in your docstring and declare your parameter/response types
 # the llm responds with more relevant information
-# tip #2: you can refer to the vibeformat decorator example to coerce the response type
 @vc
 def add_number(num1: int, num2: int) -> int:
     """

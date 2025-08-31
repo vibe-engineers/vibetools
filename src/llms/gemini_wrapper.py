@@ -1,6 +1,7 @@
 """A wrapper for the Gemini API."""
 
-from typing import Any, Optional
+import inspect
+from typing import Any
 
 from google import genai
 
@@ -59,9 +60,7 @@ class GeminiWrapper(LlmWrapper):
 
         raise VibeResponseTypeException("Unable to get a valid response from the Gemini API.")
 
-    def vibe_call_function(
-        self, func_signature: str, docstring: str, *args, response_type: Optional[type] = None, **kwargs
-    ) -> Any:
+    def vibe_call_function(self, func_signature: inspect.signature, docstring: str, *args, **kwargs) -> Any:
         """
         Call a function and return the LLM-evaluated result.
 
@@ -69,25 +68,25 @@ class GeminiWrapper(LlmWrapper):
         queries Gemini, and optionally enforces the output's Python type.
 
         Args:
-            func_signature (str): The function signature being invoked (e.g. ``"def f(x: int) -> bool:"``).
+            func_signature (inspect.signature): The function signature being invoked.
             docstring (str): The function's docstring used to give additional context to the model.
             *args: Positional arguments to include in the call.
-            response_type (Optional[type]): Expected Python type for the response. If provided,
-                the output will be coerced and validated against this type.
             **kwargs: Keyword arguments to include in the call.
 
         Returns:
-            Any: If ``response_type`` is ``None``, returns the raw text response as ``str``.
-            Otherwise, returns the value coerced to ``response_type`` on success.
+            Any: If return type is not found in the function signature, defaults to str.
+            Otherwise, returns the value coerced to the return type on success.
 
         Raises:
             VibeResponseTypeException: If the model fails to produce a valid response matching
-                ``response_type`` (when specified) within the configured number of tries.
+                the return type (when specified) within the configured number of tries.
 
         """
-        return_type_line = (
-            f"\nReturn Type: {getattr(response_type, '__name__', str(response_type))}" if response_type else ""
-        )
+        if func_signature.return_annotation is inspect.Signature.empty:
+            return_type = None
+        else:
+            return_type = func_signature.return_annotation
+        return_type_line = f"\nReturn Type: {return_type}" if return_type else ""
         prompt = f"""
         Function Signature: {func_signature}
         Docstring: {docstring}
@@ -105,17 +104,15 @@ class GeminiWrapper(LlmWrapper):
             raw_text = response.text.strip()
             console_logger.debug(f"Function call raw response: {raw_text}")
 
-            # if no response_type was specified (no @vibeformat), keep behavior unchanged.
-            if response_type is None:
+            # if no return type was specified, default to string
+            if return_type is None:
                 return raw_text
 
             # otherwise, enforce the type with shared helpers.
-            value = self._maybe_coerce(raw_text, response_type)
-            if self._is_match(value, response_type):
+            value = self._maybe_coerce(raw_text, return_type)
+            if self._is_match(value, return_type):
                 return value
 
             console_logger.debug("Response did not match expected type; retrying...")
 
-        raise VibeResponseTypeException(
-            f"Unable to get a valid response matching {response_type!r} from the Gemini API."
-        )
+        raise VibeResponseTypeException(f"Unable to get a valid response matching {return_type!r} from the Gemini API.")

@@ -42,9 +42,7 @@ class LlmWrapper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def vibe_call_function(
-        self, func_signature: str, docstring: str, *args, response_type: Optional[type] = None, **kwargs
-    ) -> Any:
+    def vibe_call_function(self, func_signature: inspect.signature, docstring: str, *args, **kwargs) -> Any:
         """
         Call a function and returns the result.
 
@@ -52,8 +50,6 @@ class LlmWrapper(ABC):
             func_signature: The function signature.
             docstring: The function's docstring.
             *args: The function's arguments.
-            response_type: (Optional) Expected Python type for the response. If provided,
-                the wrapper will validate (and attempt to coerce) LLM output to this type.
             **kwargs: The function's keyword arguments.
 
         Returns:
@@ -63,7 +59,7 @@ class LlmWrapper(ABC):
         raise NotImplementedError
 
     # ---------------------------------------------------------------------
-    # Shared helpers (lightweight; only used if response_type is provided)
+    # Shared helpers for parsing function response type
     # ---------------------------------------------------------------------
 
     def _maybe_coerce(self, raw_text: str, expected: Optional[type]) -> Any:
