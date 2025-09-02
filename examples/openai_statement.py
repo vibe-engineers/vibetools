@@ -4,17 +4,16 @@ load_dotenv()
 
 import os
 
-from google import genai
+from openai import Client
 
 from vibechecks import VibeCheck
 
-# create a google gemini client (an openai client works as well)
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# create an openai client
+client = Client(api_key=os.getenv("OPENAI_API_KEY"))
 
 # create a vibecheck instance using the above client and specify a model
-# model variants for gemini: https://ai.google.dev/gemini-api/docs/models#model-variations
 # model variants for openai: https://platform.openai.com/docs/models
-vc = VibeCheck(client, model="gemini-2.0-flash-lite")
+vc = VibeCheck(client, model="gpt-4.1-nano")
 
 # the example below asks user for a number and vibechecks if the number is prime
 user_input = input("Enter a number:")

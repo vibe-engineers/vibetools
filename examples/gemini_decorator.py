@@ -8,12 +8,11 @@ from google import genai
 
 from vibechecks import VibeCheck
 
-# create a google gemini client (an openai client works as well)
+# create a google gemini client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # create a vibecheck instance using the above client and specify a model
 # model variants for gemini: https://ai.google.dev/gemini-api/docs/models#model-variations
-# model variants for openai: https://platform.openai.com/docs/models
 vc = VibeCheck(client, model="gemini-2.0-flash-lite")
 
 # the example below vibe evaluates the result of the add_number function
