@@ -8,6 +8,7 @@ from openai import OpenAI
 
 from llms.gemini_wrapper import GeminiWrapper
 from llms.openai_wrapper import OpenAiWrapper
+from models.config import VibeCheckConfig
 from models.exceptions import VibeClientException, VibeInputTypeException
 from utils.logger import console_logger
 
@@ -25,7 +26,7 @@ class VibeCheck:
         client: OpenAI | genai.Client,
         model: str,
         *,
-        num_tries: int = 1,
+        config: VibeCheckConfig | dict | None = None,
     ) -> None:
         """
         Initialize the VibeCheck object.
@@ -33,29 +34,33 @@ class VibeCheck:
         Args:
             client: An instance of `openai.OpenAI` or `genai.Client`.
             model: The name of the model to use for the LLM.
-            num_tries: The number of times to try the LLM call if it fails.
+            config: VibeCheckConfig containing runtime knobs (e.g., num_tries).
 
         """
-        self.__load_llm(client, model, num_tries)
+        if isinstance(config, dict) or config is None:
+            self.config = VibeCheckConfig(**(config or {}))
+        else:
+            self.config = config
+        self.__load_llm(client, model, self.config)
 
-    def __load_llm(self, client: OpenAI | genai.Client, model: str, num_tries: int):
+    def __load_llm(self, client: OpenAI | genai.Client, model: str, config: VibeCheckConfig):
         """
         Load the appropriate LLM wrapper based on the client type.
 
         Args:
             client: An instance of `openai.OpenAI` or `genai.Client`.
             model: The name of the model to use for the LLM.
-            num_tries: The number of times to try the LLM call if it fails.
+            config: VibeCheckConfig containing runtime knobs (e.g., num_tries).
 
         Raises:
             VibeClientException: If the client is not a valid OpenAI or Gemini client.
 
         """
         if isinstance(client, OpenAI):
-            self.llm = OpenAiWrapper(client, model, num_tries)
+            self.llm = OpenAiWrapper(client, model, config)
             console_logger.info(f"Loaded OpenAI wrapper with model: {model}")
         elif isinstance(client, genai.Client):
-            self.llm = GeminiWrapper(client, model, num_tries)
+            self.llm = GeminiWrapper(client, model, config)
             console_logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
             raise VibeClientException("Client must be an instance of openai.OpenAI or genai.Client")

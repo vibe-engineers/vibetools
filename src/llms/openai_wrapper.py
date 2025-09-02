@@ -6,6 +6,7 @@ from typing import Any
 from openai import OpenAI
 
 from llms.llm_wrapper import LlmWrapper
+from models.config import VibeCheckConfig
 from models.exceptions import VibeResponseTypeException
 from utils.logger import console_logger
 
@@ -13,19 +14,19 @@ from utils.logger import console_logger
 class OpenAiWrapper(LlmWrapper):
     """A wrapper for the OpenAI API."""
 
-    def __init__(self, client: OpenAI, model: str, num_tries: int):
+    def __init__(self, client: OpenAI, model: str, config: VibeCheckConfig):
         """
         Initialize the OpenAI wrapper.
 
         Args:
             client: The OpenAI client.
             model: The model to use.
-            num_tries: The number of times to try the request.
+            config: VibeCheckConfig containing runtime knobs (e.g., num_tries).
 
         """
         self.client = client
         self.model = model
-        self.num_tries = num_tries  # keep parity with your current GeminiWrapper
+        self.config = config
 
     def vibe_eval_statement(self, statement: str) -> bool:
         """
@@ -41,10 +42,10 @@ class OpenAiWrapper(LlmWrapper):
             VibeResponseTypeException: If the API is unable to provide a valid response.
 
         """
-        for attempt in range(1, self.num_tries + 1):
+        for attempt in range(1, self.config.num_tries + 1):
             # catch any error thrown in this loop, log at debug, and retry
             try:
-                console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] {statement}")
+                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] {statement}")
                 response = self.client.responses.create(
                     model=self.model,
                     instructions=self._eval_statement_instruction,
@@ -97,10 +98,10 @@ class OpenAiWrapper(LlmWrapper):
         Arguments: {args}, {kwargs}{return_type_line}
         """.strip()
 
-        for attempt in range(1, self.num_tries + 1):
+        for attempt in range(1, self.config.num_tries + 1):
             # handle API exceptions and continue if desired
             try:
-                console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] Function call prompt: {prompt}")
+                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] Function call prompt: {prompt}")
                 response = self.client.responses.create(
                     model=self.model,
                     instructions=self._call_function_instruction,
