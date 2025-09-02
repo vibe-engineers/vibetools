@@ -42,16 +42,20 @@ class OpenAiWrapper(LlmWrapper):
 
         """
         for attempt in range(1, self.num_tries + 1):
-            # TODO: errors can be thrown in this loop, catch it
-            console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] {statement}")
-            response = self.client.responses.create(
-                model=self.model,
-                instructions=self._eval_statement_instruction,
-                input=statement,
-            )
+            # catch any error thrown in this loop, log at debug, and retry
+            try:
+                console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] {statement}")
+                response = self.client.responses.create(
+                    model=self.model,
+                    instructions=self._eval_statement_instruction,
+                    input=statement,
+                )
+            except Exception as e:
+                console_logger.debug(f"Error on attempt {attempt}: {e}")
+                continue
 
-            output_text = response.output_text.lower().strip()
-            console_logger.debug(f"Response: {output_text}")
+            output_text = (getattr(response, "output_text", None) or "").lower().strip()
+            console_logger.debug(f"Response: {output_text!r}")
 
             if "true" in output_text:
                 return True
@@ -94,15 +98,20 @@ class OpenAiWrapper(LlmWrapper):
         """.strip()
 
         for attempt in range(1, self.num_tries + 1):
-            # TODO: handle API exceptions and continue if desired
-            console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] Function call prompt: {prompt}")
-            response = self.client.responses.create(
-                model=self.model,
-                instructions=self._call_function_instruction,
-                input=prompt,
-            )
-            raw_text = response.output_text.strip()
-            console_logger.debug(f"Function call raw response: {raw_text}")
+            # handle API exceptions and continue if desired
+            try:
+                console_logger.debug(f"[Attempt {attempt}/{self.num_tries}] Function call prompt: {prompt}")
+                response = self.client.responses.create(
+                    model=self.model,
+                    instructions=self._call_function_instruction,
+                    input=prompt,
+                )
+            except Exception as e:
+                console_logger.debug(f"Error on attempt {attempt}: {e}")
+                continue
+
+            raw_text = (getattr(response, "output_text", None) or "").strip()
+            console_logger.debug(f"Function call raw response: {raw_text!r}")
 
             # if no return type was specified, default to string
             if return_type is None:
