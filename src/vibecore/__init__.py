@@ -1,5 +1,7 @@
 """VibeCore: Core components for vibe-based libraries."""
 
+from models.vibe_config import VibeConfig
+
 from vibecore.models.exceptions import (
     VibeInputTypeException,
     VibeLlmApiException,
@@ -8,12 +10,11 @@ from vibecore.models.exceptions import (
     VibeTimeoutException,
 )
 from vibecore.models.vibe_llm_client import VibeLlmClient
-from vibecore.models.vibe_llm_config import VibeLlmConfig
 from vibecore.utils.logger import ConsoleLogger
 
 __all__ = [
     "VibeLlmClient",
-    "VibeLlmConfig",
+    "VibeConfig",
     "VibeLlmClientException",
     "VibeResponseParseException",
     "VibeLlmApiException",

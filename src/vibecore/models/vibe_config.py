@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class VibeLlmConfig:
+class VibeConfig:
     """
-    VibeLlmConfig for additional customizations.
+    VibeConfig for additional customizations.
     """
 
     timeout: int = 10000

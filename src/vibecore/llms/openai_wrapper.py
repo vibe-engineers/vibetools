@@ -3,25 +3,25 @@
 import inspect
 from typing import Any
 
+from models.vibe_config import VibeConfig
 from openai import OpenAI
 
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
-from vibecore.models.vibe_llm_config import VibeLlmConfig
 from vibecore.utils.logger import ConsoleLogger
 
 
 class OpenAiWrapper(LlmWrapper):
     """A wrapper for the OpenAI API."""
 
-    def __init__(self, client: OpenAI, model: str, config: VibeLlmConfig, logger: ConsoleLogger):
+    def __init__(self, client: OpenAI, model: str, config: VibeConfig, logger: ConsoleLogger):
         """
         Initialize the OpenAI wrapper.
 
         Args:
             client: The OpenAI client.
             model: The model to use.
-            config: VibeLlmConfig containing runtime knobs (e.g., timeout).
+            config: VibeConfig containing runtime knobs (e.g., timeout).
             logger (ConsoleLogger): Logger instance for logging.
 
         """
