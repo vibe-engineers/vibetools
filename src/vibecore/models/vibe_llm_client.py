@@ -12,14 +12,14 @@ from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.llms.openai_wrapper import OpenAiWrapper
 from vibecore.models.exceptions import VibeLlmClientException
 from vibecore.models.vibe_llm_config import VibeLlmConfig
-from vibecore.utils.logger import console_logger
+from vibecore.utils.logger import ConsoleLogger
 
 if TYPE_CHECKING:
 
     from google.genai.client import Client as GeminiClient
     from openai import OpenAI
 
-SupportedClients = OpenAI | GeminiClient
+SharedClient = OpenAI | GeminiClient
 
 
 class VibeLlmClient(LlmWrapper):
@@ -33,14 +33,15 @@ class VibeLlmClient(LlmWrapper):
     Internally, it dispatches to the appropriate wrapper implementation.
     """
 
-    def __init__(self, client: SupportedClients, model: str, config: VibeLlmConfig):
+    def __init__(self, client: SharedClient, model: str, config: VibeLlmConfig, logger: ConsoleLogger):
         """
         Initialize the VibeLlmClient with a backend client.
 
         Args:
-            client (ClientLike): Either an instance of `openai.OpenAI` or `google.genai.Client`.
+            client (SharedClient): Either an instance of `openai.OpenAI` or `google.genai.Client`.
             model (str): The name of the LLM model to use (e.g., "gpt-4", "gemini-pro").
             config (VibeLlmConfig): Configuration options such as retry behavior.
+            logger (ConsoleLogger): Logger instance for logging.
 
         Raises:
             VibeLlmClientException: If the provided client is not a supported type.
@@ -52,11 +53,11 @@ class VibeLlmClient(LlmWrapper):
 
         # initialize llm based on client type
         if isinstance(client, OpenAI):
-            self.llm = OpenAiWrapper(client, model, config)
-            console_logger.info(f"Loaded OpenAI wrapper with model: {model}")
+            self.llm = OpenAiWrapper(client, model, config, logger)
+            logger.info(f"Loaded OpenAI wrapper with model: {model}")
         elif isinstance(client, genai.Client):
-            self.llm = GeminiWrapper(client, model, config)
-            console_logger.info(f"Loaded Gemini wrapper with model: {model}")
+            self.llm = GeminiWrapper(client, model, config, logger)
+            logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
             raise VibeLlmClientException("Client must be an instance of openai.OpenAI or google.genai.Client")
 
