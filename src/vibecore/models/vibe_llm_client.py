@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from google import genai
-from models.vibe_config import VibeConfig
 from openai import OpenAI
 
 from vibecore.llms.gemini_wrapper import GeminiWrapper
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.llms.openai_wrapper import OpenAiWrapper
 from vibecore.models.exceptions import VibeLlmClientException
+from vibecore.models.vibe_config import VibeConfig
 from vibecore.utils.logger import ConsoleLogger
 
 if TYPE_CHECKING:

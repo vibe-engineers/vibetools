@@ -3,11 +3,11 @@
 import inspect
 from typing import Any
 
-from models.vibe_config import VibeConfig
 from openai import OpenAI
 
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibecore.models.vibe_config import VibeConfig
 from vibecore.utils.logger import ConsoleLogger
 
 
