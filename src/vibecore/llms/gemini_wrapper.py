@@ -54,7 +54,6 @@ class GeminiWrapper(LlmWrapper):
                 model=self.model,
                 contents=statement,
                 config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
-                timeout=self.config.timeout,
             )
 
             output_text = (getattr(response, "text", None) or "").lower().strip()
@@ -108,7 +107,6 @@ class GeminiWrapper(LlmWrapper):
                 model=self.model,
                 contents=prompt,
                 config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
-                timeout=self.config.timeout,
             )
 
             raw_text = (getattr(response, "text", None) or "").strip()
