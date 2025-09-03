@@ -5,23 +5,23 @@ from typing import Any
 
 from google import genai
 
-from llms.llm_wrapper import LlmWrapper
-from models.config import VibeCheckConfig
-from models.exceptions import VibeResponseTypeException
-from utils.logger import console_logger
+from vibecore.llms.llm_wrapper import LlmWrapper
+from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibecore.models.vibe_llm_config import VibeLlmConfig
+from vibecore.utils.logger import console_logger
 
 
 class GeminiWrapper(LlmWrapper):
     """A wrapper for the Gemini API."""
 
-    def __init__(self, client: genai.Client, model: str, config: VibeCheckConfig):
+    def __init__(self, client: genai.Client, model: str, config: VibeLlmConfig):
         """
         Initialize the Gemini wrapper.
 
         Args:
             client: The Gemini client.
             model: The model to use.
-            config: VibeCheckConfig containing runtime knobs (e.g., num_tries).
+            config: VibeLlmConfig containing runtime knobs (e.g., timeout).
 
         """
         self.client = client
@@ -39,21 +39,17 @@ class GeminiWrapper(LlmWrapper):
             A boolean indicating whether the statement is true or false.
 
         Raises:
-            VibeResponseTypeException: If the API is unable to provide a valid response.
+            VibeResponseParseException: If the API is unable to provide a boolean response.
+            VibeLlmApiException: If the LLM API returns an error.
 
         """
-        for attempt in range(1, self.config.num_tries + 1):
-            # catch any error thrown in this loop, log at debug, and retry
-            try:
-                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] {statement}")
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=statement,
-                    config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
-                )
-            except Exception as e:
-                console_logger.debug(f"Error on attempt {attempt}: {e}")
-                continue
+        try:
+            console_logger.debug(f"Performing statement evaluation: {statement}")
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=statement,
+                config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
+            )
 
             output_text = (getattr(response, "text", None) or "").lower().strip()
             console_logger.debug(f"Response: {output_text!r}")
@@ -62,8 +58,9 @@ class GeminiWrapper(LlmWrapper):
                 return True
             if "false" in output_text:
                 return False
-
-        raise VibeResponseTypeException("Unable to get a valid response from the Gemini API.")
+            raise VibeResponseParseException("Unable to parse response to expected bool type.")
+        except Exception as e:
+            raise VibeLlmApiException(f"Unable to evaluate statement: {e}")
 
     def vibe_call_function(self, func_signature: inspect.signature, docstring: str, *args, **kwargs) -> Any:
         """
@@ -83,8 +80,9 @@ class GeminiWrapper(LlmWrapper):
             Otherwise, returns the value coerced to the return type on success.
 
         Raises:
-            VibeResponseTypeException: If the model fails to produce a valid response matching
-                the return type (when specified) within the configured number of tries.
+            VibeResponseParseException: If the model fails to produce a valid response matching
+                the return type (when specified).
+            VibeLlmApiException: If the LLM API returns an error.
 
         """
         if func_signature.return_annotation is inspect.Signature.empty:
@@ -98,21 +96,16 @@ class GeminiWrapper(LlmWrapper):
         Arguments: {args}, {kwargs}{return_type_line}
         """.strip()
 
-        for attempt in range(1, self.config.num_tries + 1):
-            # catch any error thrown in this loop, log at debug, and retry
-            try:
-                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] Function call prompt: {prompt}")
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
-                )
-            except Exception as e:
-                console_logger.debug(f"Error on attempt {attempt}: {e}")
-                continue
+        try:
+            console_logger.debug(f"Performing function call: {prompt}")
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
+            )
 
             raw_text = (getattr(response, "text", None) or "").strip()
-            console_logger.debug(f"Function call raw response: {raw_text!r}")
+            console_logger.debug(f"Response: {raw_text!r}")
 
             # if no return type was specified, default to string
             if return_type is None:
@@ -123,6 +116,6 @@ class GeminiWrapper(LlmWrapper):
             if self._is_match(value, return_type):
                 return value
 
-            console_logger.debug("Response did not match expected type; retrying...")
-
-        raise VibeResponseTypeException(f"Unable to get a valid response matching {return_type!r} from the Gemini API.")
+            raise VibeResponseParseException(f"Unable to parse response to expected {return_type!r} type.")
+        except Exception as e:
+            raise VibeLlmApiException(f"Unable to call function: {e}")
