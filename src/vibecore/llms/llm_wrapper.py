@@ -5,10 +5,14 @@ from __future__ import annotations
 import inspect
 import json
 import logging
+import queue
+import threading
 from abc import ABC, abstractmethod
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, get_args, get_origin
+
+from vibecore.models.exceptions import VibeTimeoutException
 
 
 class LlmWrapper(ABC):
@@ -36,6 +40,54 @@ class LlmWrapper(ABC):
         """
         # safe default so abstract classes can log without a child-provided logger
         self.logger = logger or logging.getLogger("VibeCore")
+
+    def _run_with_timeout(self, func, timeout, *args, **kwargs):
+        """
+        Run a function with a timeout.
+
+        Args:
+            func: The function to run.
+            timeout: The timeout in milliseconds.
+            *args: Positional arguments passed to the function.
+            **kwargs: Keyword arguments passed to the function.
+
+        Returns:
+            The result of the function call.
+
+        Raises:
+            VibeTimeoutException: If the function call times out.
+            Exception: If the target function raises; the original exception is chained.
+
+        """
+        result_queue = queue.Queue()
+        exception_queue = queue.Queue()
+
+        def target():
+            try:
+                result = func(*args, **kwargs)
+                result_queue.put(result)
+            except Exception as e:  # noqa: BLE001
+                exception_queue.put(e)
+
+        thread = threading.Thread(target=target, daemon=True)
+        thread.start()
+
+        # Convert ms -> seconds for join()
+        timeout_seconds = timeout / 1000.0
+        thread.join(timeout_seconds)
+
+        if thread.is_alive():
+            # Still running: timed out
+            raise VibeTimeoutException(f"Function call timed out after {timeout} ms")
+
+        # Thread finished: either we have a result or an exception
+        if not exception_queue.empty():
+            exc = exception_queue.get()
+            # Raise a documented Exception type and keep original as __cause__
+            raise Exception("Exception occurred in target function") from exc
+
+        # If the function returned None explicitly, result_queue may be empty.
+        return result_queue.get_nowait() if not result_queue.empty() else None
 
     @abstractmethod
     def vibe_eval_statement(self, statement: str) -> bool:

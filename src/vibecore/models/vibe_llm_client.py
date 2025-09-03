@@ -47,9 +47,11 @@ class VibeLlmClient(LlmWrapper):
             VibeLlmClientException: If the provided client is not a supported type.
 
         """
-        # normalize config to vibeconfig if is dict or none
+        super().__init__(logger)
+        # normalize config to vibeconfig if is dict or none and set config
         if isinstance(config, dict) or config is None:
             config = VibeConfig(**(config or {}))
+        self.config = config
 
         # initialize llm based on client type
         if isinstance(client, OpenAI):
@@ -72,7 +74,11 @@ class VibeLlmClient(LlmWrapper):
             bool: True if the model determines the statement is true, False otherwise.
 
         """
-        return self.llm.vibe_eval_statement(statement)
+        return self._run_with_timeout(
+            self.llm.vibe_eval_statement,
+            self.config.timeout,
+            statement,
+        )
 
     def vibe_call_function(self, func_signature, docstring: str, *args, **kwargs):
         """
@@ -89,4 +95,11 @@ class VibeLlmClient(LlmWrapper):
                  expected Python return type.
 
         """
-        return self.llm.vibe_call_function(func_signature, docstring, *args, **kwargs)
+        return self._run_with_timeout(
+            self.llm.vibe_call_function,
+            self.config.timeout,
+            func_signature,
+            docstring,
+            *args,
+            **kwargs,
+        )
