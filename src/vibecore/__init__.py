@@ -7,7 +7,7 @@ from vibecore.models.exceptions import (
 )
 from vibecore.models.vibe_llm_client import VibeLlmClient
 from vibecore.models.vibe_llm_config import VibeLlmConfig
-from vibecore.utils.logger import console_logger
+from vibecore.utils.logger import ConsoleLogger
 
 __all__ = [
     "VibeLlmClient",
@@ -15,5 +15,5 @@ __all__ = [
     "VibeLlmClientException",
     "VibeResponseParseException",
     "VibeTimeoutException",
-    "console_logger",
+    "ConsoleLogger",
 ]

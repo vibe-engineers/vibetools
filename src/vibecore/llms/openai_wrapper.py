@@ -8,13 +8,13 @@ from openai import OpenAI
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
 from vibecore.models.vibe_llm_config import VibeLlmConfig
-from vibecore.utils.logger import console_logger
+from vibecore.utils.logger import ConsoleLogger
 
 
 class OpenAiWrapper(LlmWrapper):
     """A wrapper for the OpenAI API."""
 
-    def __init__(self, client: OpenAI, model: str, config: VibeLlmConfig):
+    def __init__(self, client: OpenAI, model: str, config: VibeLlmConfig, logger: ConsoleLogger):
         """
         Initialize the OpenAI wrapper.
 
@@ -22,8 +22,10 @@ class OpenAiWrapper(LlmWrapper):
             client: The OpenAI client.
             model: The model to use.
             config: VibeLlmConfig containing runtime knobs (e.g., timeout).
+            logger (ConsoleLogger): Logger instance for logging.
 
         """
+        super().__init__(logger=logger)
         self.client = client
         self.model = model
         self.config = config
@@ -44,7 +46,7 @@ class OpenAiWrapper(LlmWrapper):
 
         """
         try:
-            console_logger.debug(f"Performing statement evaluation: {statement}")
+            self.logger.debug(f"Performing statement evaluation: {statement}")
             response = self.client.responses.create(
                 model=self.model,
                 instructions=self._eval_statement_instruction,
@@ -52,7 +54,7 @@ class OpenAiWrapper(LlmWrapper):
             )
 
             output_text = (getattr(response, "output_text", None) or "").lower().strip()
-            console_logger.debug(f"Response: {output_text!r}")
+            self.logger.debug(f"Response: {output_text!r}")
 
             if "true" in output_text:
                 return True
@@ -97,7 +99,7 @@ class OpenAiWrapper(LlmWrapper):
         """.strip()
 
         try:
-            console_logger.debug(f"Performing function call: {prompt}")
+            self.logger.debug(f"Performing function call: {prompt}")
             response = self.client.responses.create(
                 model=self.model,
                 instructions=self._call_function_instruction,
@@ -105,7 +107,7 @@ class OpenAiWrapper(LlmWrapper):
             )
 
             raw_text = (getattr(response, "output_text", None) or "").strip()
-            console_logger.debug(f"Function call raw response: {raw_text!r}")
+            self.logger.debug(f"Function call raw response: {raw_text!r}")
 
             # if no return type was specified, default to string
             if return_type is None:

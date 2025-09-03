@@ -6,15 +6,18 @@ from typing import Any
 from google import genai
 
 from vibecore.llms.llm_wrapper import LlmWrapper
-from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibecore.models.exceptions import (
+    VibeLlmApiException,
+    VibeResponseParseException,
+)
 from vibecore.models.vibe_llm_config import VibeLlmConfig
-from vibecore.utils.logger import console_logger
+from vibecore.utils.logger import ConsoleLogger
 
 
 class GeminiWrapper(LlmWrapper):
     """A wrapper for the Gemini API."""
 
-    def __init__(self, client: genai.Client, model: str, config: VibeLlmConfig):
+    def __init__(self, client: genai.Client, model: str, config: VibeLlmConfig, logger: ConsoleLogger):
         """
         Initialize the Gemini wrapper.
 
@@ -22,8 +25,10 @@ class GeminiWrapper(LlmWrapper):
             client: The Gemini client.
             model: The model to use.
             config: VibeLlmConfig containing runtime knobs (e.g., timeout).
+            logger (ConsoleLogger): Logger instance for logging.
 
         """
+        super().__init__(logger=logger)
         self.client = client
         self.model = model
         self.config = config
@@ -44,15 +49,16 @@ class GeminiWrapper(LlmWrapper):
 
         """
         try:
-            console_logger.debug(f"Performing statement evaluation: {statement}")
+            self.logger.debug(f"Performing statement evaluation: {statement}")
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=statement,
                 config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
+                timeout=self.config.timeout,
             )
 
             output_text = (getattr(response, "text", None) or "").lower().strip()
-            console_logger.debug(f"Response: {output_text!r}")
+            self.logger.debug(f"Response: {output_text!r}")
 
             if "true" in output_text:
                 return True
@@ -97,15 +103,16 @@ class GeminiWrapper(LlmWrapper):
         """.strip()
 
         try:
-            console_logger.debug(f"Performing function call: {prompt}")
+            self.logger.debug(f"Performing function call: {prompt}")
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=prompt,
                 config=genai.types.GenerateContentConfig(system_instruction=self._call_function_instruction),
+                timeout=self.config.timeout,
             )
 
             raw_text = (getattr(response, "text", None) or "").strip()
-            console_logger.debug(f"Response: {raw_text!r}")
+            self.logger.debug(f"Response: {raw_text!r}")
 
             # if no return type was specified, default to string
             if return_type is None:

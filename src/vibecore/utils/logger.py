@@ -43,26 +43,37 @@ class ColorFormatter(logging.Formatter):
         """
         color = LEVEL_COLORS.get(record.levelname, "")
         record.levelname = f"{color}{record.levelname}{RESET}"
-        record.name = f"{YELLOW}{LOGGER_PREFIX}{RESET}"
+        record.name = f"{YELLOW}{record.name}{RESET}"
         return super().format(record)
 
 
-# creates logger
-console_logger = logging.getLogger(LOGGER_PREFIX)
+class ConsoleLogger(logging.Logger):
+    """
+    Console logger class that configures itself on initialization.
+    """
 
-# sets log level to error if not specified
-log_level_num = getattr(logging, LOGGER_LEVEL, logging.ERROR)
-console_logger.setLevel(log_level_num)
+    def __new__(cls, name: str = LOGGER_PREFIX):
+        """
+        Create a new ConsoleLogger instance.
 
-# formats logger output with colors
-formatter = ColorFormatter(LOGGER_FORMAT)
+        Args:
+            name (str): The name of the logger.
 
-# sets the stream formatter and handler
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
+        Returns:
+            ConsoleLogger: The configured logger instance.
 
-# avoid duplicate handlers
-if not console_logger.handlers:
-    console_logger.addHandler(stream_handler)
+        """
+        logger = logging.getLogger(name)
 
-console_logger.info("✅ Logger is successfully configured.")
+        log_level_num = getattr(logging, LOGGER_LEVEL, logging.ERROR)
+        logger.setLevel(log_level_num)
+
+        formatter = ColorFormatter(LOGGER_FORMAT)
+
+        if not logger.handlers:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setFormatter(formatter)
+            logger.addHandler(stream_handler)
+
+        logger.info("✅ Logger is successfully configured.")
+        return logger
