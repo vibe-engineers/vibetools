@@ -1,6 +1,7 @@
 """A wrapper for the OpenAI API."""
 
 import inspect
+import time
 from typing import Any
 
 from openai import OpenAI
@@ -42,26 +43,41 @@ class OpenAiWrapper(LlmWrapper):
             VibeResponseTypeException: If the API is unable to provide a valid response.
 
         """
-        for attempt in range(1, self.config.num_tries + 1):
+        # determine total tries using new/back-compat knobs
+        total_tries = max(self.config.num_tries, self.config.max_retries + 1)
+        for attempt in range(1, total_tries + 1):
             # catch any error thrown in this loop, log at debug, and retry
             try:
-                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] {statement}")
+                console_logger.debug(f"[Attempt {attempt}/{total_tries}] {statement}")
+                t0 = time.perf_counter()
                 response = self.client.responses.create(
                     model=self.model,
                     instructions=self._eval_statement_instruction,
                     input=statement,
                 )
+                dt = time.perf_counter() - t0
             except Exception as e:
-                console_logger.debug(f"Error on attempt {attempt}: {e}")
+                console_logger.debug(f"API error on attempt {attempt}: {e}")
+                # backoff before retrying
+                if attempt < total_tries:
+                    delay = min(self.config.backoff_base * (2 ** (attempt - 1)), self.config.backoff_max)
+                    console_logger.debug(f"Backing off for {delay:.2f}s before retry (API error)")
+                    time.sleep(delay)
                 continue
 
             output_text = (getattr(response, "output_text", None) or "").lower().strip()
-            console_logger.debug(f"Response: {output_text!r}")
+            console_logger.debug(f"Response ({dt*1000:.0f} ms): {output_text!r}")
 
             if "true" in output_text:
                 return True
             if "false" in output_text:
                 return False
+
+            # fallthrough: text did not include a boolean; backoff and retry
+            if attempt < total_tries:
+                delay = min(self.config.backoff_base * (2 ** (attempt - 1)), self.config.backoff_max)
+                console_logger.debug(f"Backing off for {delay:.2f}s before retry (no boolean found)")
+                time.sleep(delay)
 
         raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")
 
@@ -98,21 +114,29 @@ class OpenAiWrapper(LlmWrapper):
         Arguments: {args}, {kwargs}{return_type_line}
         """.strip()
 
-        for attempt in range(1, self.config.num_tries + 1):
+        # determine total tries using new/back-compat knobs
+        total_tries = max(self.config.num_tries, self.config.max_retries + 1)
+        for attempt in range(1, total_tries + 1):
             # handle API exceptions and continue if desired
             try:
-                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] Function call prompt: {prompt}")
+                console_logger.debug(f"[Attempt {attempt}/{total_tries}] Function call prompt: {prompt}")
+                t0 = time.perf_counter()
                 response = self.client.responses.create(
                     model=self.model,
                     instructions=self._call_function_instruction,
                     input=prompt,
                 )
+                dt = time.perf_counter() - t0
             except Exception as e:
-                console_logger.debug(f"Error on attempt {attempt}: {e}")
+                console_logger.debug(f"API error on attempt {attempt}: {e}")
+                if attempt < total_tries:
+                    delay = min(self.config.backoff_base * (2 ** (attempt - 1)), self.config.backoff_max)
+                    console_logger.debug(f"Backing off for {delay:.2f}s before retry (API error)")
+                    time.sleep(delay)
                 continue
 
             raw_text = (getattr(response, "output_text", None) or "").strip()
-            console_logger.debug(f"Function call raw response: {raw_text!r}")
+            console_logger.debug(f"Function call raw response ({dt*1000:.0f} ms): {raw_text!r}")
 
             # if no return type was specified, default to string
             if return_type is None:
@@ -124,5 +148,9 @@ class OpenAiWrapper(LlmWrapper):
                 return value
 
             console_logger.debug("Response did not match expected type; retrying...")
+            if attempt < total_tries:
+                delay = min(self.config.backoff_base * (2 ** (attempt - 1)), self.config.backoff_max)
+                console_logger.debug(f"Backing off for {delay:.2f}s before retry (type mismatch)")
+                time.sleep(delay)
 
         raise VibeResponseTypeException(f"Unable to get a valid response matching {return_type!r} from the OpenAI API.")
