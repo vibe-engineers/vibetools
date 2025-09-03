@@ -16,36 +16,18 @@
 * [Others](#others)
 
 ### Introduction
-**VibeCore** is a lightweight python package that allows users to use natural language (LLMs) as part of their code logic. For example, **VibeCore** can be used to check if/loop statements as well as provide responses for functions that are described but not implemented. It supports OpenAI and Google Gemini client currently and asimple example illustrating how it can be used can be seen below:
-```python
-from google import genai
-from vibecore import VibeCheck
+**VibeCore** is a lightweight python package containing shared modules/logic across several **VibeKit** libraries. Note that this package is depended on by other sublibraries (e.g. VibeChecks) and is **not intended to be used externally**. Unless you're a developer working on one of the VibeKit libraries, you should not be installing this core library directly.
 
-# initialize client
-client = genai.Client(api_key=GEMINI_API_KEY)
-
-# wrap it in VibeCheck
-vc = VibeCheck(client, model="gemini-2.0-flash-lite")
-
-# logic below vibecore if a user input number is prime
-user_input = input("Enter a number:")
-if vc(f"{user_input} is a prime number"):
-    print(f"{user_input} is a prime number!")
-else:
-    print(f"{user_input} is not a prime number.")
-```
-
-**VibeCore** is published on [**pypi**](https://pypi.org/project/vibecore/) and can be easily installed with:
+For internal developers, **VibeCore** is published on [**pypi**](https://pypi.org/project/vibecore/) and can be easily installed with:
 ```bash
 python3 -m pip install vibecore
 ```
 Details on the usage of the package and available APIs can be found on the [**wiki page**](https://github.com/vibekit/vibecore/wiki).
 
 ### Features
-- **Natural Language Conditions**: Use natural language to check for conditions, making your code more readable and intuitive.
-- **Multi-provider Support**: Seamlessly switch between different LLM providers. VibeCore currently supports OpenAI and Google Gemini.
-- **Extensible**: The modular design allows for easy extension to other LLM providers in the future.
-- **Custom Exceptions**: Provides custom exceptions for better error handling and debugging.
+- **Shared LLM Modules**: The core library provides shared LLM modules such as Google Gemini and OpenAI Wrappers. It also contains shared evaluation logic such as for statements and functions.
+- **Common Base Exceptions**: Several common base exceptions are available out of the box (e.g. VibeTimeoutException, VibeResponseParseException).
+- **Logger**: A custom logger is included in the core library for ease and consistency of log outputs.
 
 ### Technologies
 Technologies used by VibeCore are as below:

@@ -25,7 +25,7 @@ authors = [
   { name="tjtanjin", email="cjtanjin@gmail.com" },
   { name="konglyyy", email="kongleyi99@gmail.com" },
 ]
-description = "Core modules shared across vibetools libraries."
+description = "Core modules shared across vibekit libraries."
 readme = "README.md"
 requires-python = ">=3.0"
 classifiers = [
