@@ -46,6 +46,11 @@ class VibeLlmClient(LlmWrapper):
             VibeLlmClientException: If the provided client is not a supported type.
 
         """
+        # normalize config to vibellmconfig if is dict or none
+        if isinstance(config, dict) or config is None:
+            config = VibeLlmConfig(**(config or {}))
+
+        # initialize llm based on client type
         if isinstance(client, OpenAI):
             self.llm = OpenAiWrapper(client, model, config)
             console_logger.info(f"Loaded OpenAI wrapper with model: {model}")
