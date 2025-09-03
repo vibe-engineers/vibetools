@@ -38,6 +38,9 @@ class LlmWrapper(ABC):
         Returns:
             A boolean indicating whether the statement is true or false.
 
+        Raises:
+            VibeResponseParseException: If the model does not return a valid parsed response.
+
         """
         raise NotImplementedError
 
@@ -54,6 +57,9 @@ class LlmWrapper(ABC):
 
         Returns:
             The result of the function call.
+
+        Raises:
+            VibeResponseParseException: If the model does not return a valid parsed response.
 
         """
         raise NotImplementedError

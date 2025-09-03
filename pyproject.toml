@@ -3,15 +3,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["src/**"]
+include = ["src/vibecore/**"]
 
 [tool.hatch.build.targets.wheel.sources]
-"src" = ""
+"src/vibecore" = ""
 
 [tool.hatch.envs.default.scripts]
 lint = "darglint ./src && ruff check --fix ./src && black --check ./src"
 format = "ruff check --fix ./src && black ./src"
-test = "pytest ./tests/test.py"
+test = "pytest ./tests/test_vibecore.py"
 
 [tool.pytest.ini_options]
 pythonpath = [
@@ -19,13 +19,13 @@ pythonpath = [
 ]
 
 [project]
-name = "vibechecks"
+name = "vibecore"
 version = "0.1.0"
 authors = [
   { name="tjtanjin", email="cjtanjin@gmail.com" },
   { name="konglyyy", email="kongleyi99@gmail.com" },
 ]
-description = "Bring vibes into your code: LLM-powered if-statements, loops, and functions."
+description = "Core modules shared across vibetools libraries."
 readme = "README.md"
 requires-python = ">=3.0"
 classifiers = [
@@ -35,8 +35,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/konglyyy/vibechecks"
-Issues = "https://github.com/konglyyy/vibechecks/issues"
+Homepage = "https://github.com/vibekit/vibecore"
+Issues = "https://github.com/vibekit/vibecore/issues"
 
 [tool.ruff]
 line-length = 120

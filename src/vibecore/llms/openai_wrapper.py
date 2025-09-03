@@ -5,23 +5,23 @@ from typing import Any
 
 from openai import OpenAI
 
-from llms.llm_wrapper import LlmWrapper
-from models.config import VibeCheckConfig
-from models.exceptions import VibeResponseTypeException
-from utils.logger import console_logger
+from vibecore.llms.llm_wrapper import LlmWrapper
+from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibecore.models.vibe_llm_config import VibeLlmConfig
+from vibecore.utils.logger import console_logger
 
 
 class OpenAiWrapper(LlmWrapper):
     """A wrapper for the OpenAI API."""
 
-    def __init__(self, client: OpenAI, model: str, config: VibeCheckConfig):
+    def __init__(self, client: OpenAI, model: str, config: VibeLlmConfig):
         """
         Initialize the OpenAI wrapper.
 
         Args:
             client: The OpenAI client.
             model: The model to use.
-            config: VibeCheckConfig containing runtime knobs (e.g., num_tries).
+            config: VibeLlmConfig containing runtime knobs (e.g., timeout).
 
         """
         self.client = client
@@ -39,21 +39,17 @@ class OpenAiWrapper(LlmWrapper):
             A boolean indicating whether the statement is true or false.
 
         Raises:
-            VibeResponseTypeException: If the API is unable to provide a valid response.
+            VibeResponseParseException: If the API is unable to provide a boolean response.
+            VibeLlmApiException: If the LLM API returns an error.
 
         """
-        for attempt in range(1, self.config.num_tries + 1):
-            # catch any error thrown in this loop, log at debug, and retry
-            try:
-                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] {statement}")
-                response = self.client.responses.create(
-                    model=self.model,
-                    instructions=self._eval_statement_instruction,
-                    input=statement,
-                )
-            except Exception as e:
-                console_logger.debug(f"Error on attempt {attempt}: {e}")
-                continue
+        try:
+            console_logger.debug(f"Performing statement evaluation: {statement}")
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=self._eval_statement_instruction,
+                input=statement,
+            )
 
             output_text = (getattr(response, "output_text", None) or "").lower().strip()
             console_logger.debug(f"Response: {output_text!r}")
@@ -62,8 +58,9 @@ class OpenAiWrapper(LlmWrapper):
                 return True
             if "false" in output_text:
                 return False
-
-        raise VibeResponseTypeException("Unable to get a valid response from the OpenAI API.")
+            raise VibeResponseParseException("Unable to parse response to expected bool type.")
+        except Exception as e:
+            raise VibeLlmApiException(f"Unable to evaluate statement: {e}")
 
     def vibe_call_function(self, func_signature: inspect.signature, docstring: str, *args, **kwargs) -> Any:
         """
@@ -83,8 +80,9 @@ class OpenAiWrapper(LlmWrapper):
             Otherwise, returns the value coerced to the return type on success.
 
         Raises:
-            VibeResponseTypeException: If the model fails to produce a valid response matching
-                the return type (when specified) within the configured number of tries.
+            VibeResponseParseException: If the model fails to produce a valid response matching
+                the return type (when specified).
+            VibeLlmApiException: If the LLM API returns an error.
 
         """
         if func_signature.return_annotation is inspect.Signature.empty:
@@ -98,18 +96,13 @@ class OpenAiWrapper(LlmWrapper):
         Arguments: {args}, {kwargs}{return_type_line}
         """.strip()
 
-        for attempt in range(1, self.config.num_tries + 1):
-            # handle API exceptions and continue if desired
-            try:
-                console_logger.debug(f"[Attempt {attempt}/{self.config.num_tries}] Function call prompt: {prompt}")
-                response = self.client.responses.create(
-                    model=self.model,
-                    instructions=self._call_function_instruction,
-                    input=prompt,
-                )
-            except Exception as e:
-                console_logger.debug(f"Error on attempt {attempt}: {e}")
-                continue
+        try:
+            console_logger.debug(f"Performing function call: {prompt}")
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=self._call_function_instruction,
+                input=prompt,
+            )
 
             raw_text = (getattr(response, "output_text", None) or "").strip()
             console_logger.debug(f"Function call raw response: {raw_text!r}")
@@ -123,6 +116,6 @@ class OpenAiWrapper(LlmWrapper):
             if self._is_match(value, return_type):
                 return value
 
-            console_logger.debug("Response did not match expected type; retrying...")
-
-        raise VibeResponseTypeException(f"Unable to get a valid response matching {return_type!r} from the OpenAI API.")
+            raise VibeResponseParseException(f"Unable to parse response to expected {return_type!r} type.")
+        except Exception as e:
+            raise VibeLlmApiException(f"Unable to call function: {e}")
