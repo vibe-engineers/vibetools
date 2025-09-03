@@ -21,3 +21,11 @@ class VibeLlmApiException(Exception):
 
 class VibeTimeoutException(Exception):
     """Raised when a vibe execution timeouts."""
+
+    pass
+
+
+class VibeInputTypeException(Exception):
+    """Raised when the input type given is invalid."""
+
+    pass

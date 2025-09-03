@@ -16,10 +16,10 @@ from vibecore.utils.logger import ConsoleLogger
 
 if TYPE_CHECKING:
 
-    from google.genai.client import Client as GeminiClient
+    from google import genai
     from openai import OpenAI
 
-SharedClient = OpenAI | GeminiClient
+SharedClient = OpenAI | genai.Client
 
 
 class VibeLlmClient(LlmWrapper):
