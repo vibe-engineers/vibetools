@@ -4,27 +4,27 @@ import inspect
 from typing import Any
 
 from google import genai
+from models.vibe_config import VibeConfig
 
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.models.exceptions import (
     VibeLlmApiException,
     VibeResponseParseException,
 )
-from vibecore.models.vibe_llm_config import VibeLlmConfig
 from vibecore.utils.logger import ConsoleLogger
 
 
 class GeminiWrapper(LlmWrapper):
     """A wrapper for the Gemini API."""
 
-    def __init__(self, client: genai.Client, model: str, config: VibeLlmConfig, logger: ConsoleLogger):
+    def __init__(self, client: genai.Client, model: str, config: VibeConfig, logger: ConsoleLogger):
         """
         Initialize the Gemini wrapper.
 
         Args:
             client: The Gemini client.
             model: The model to use.
-            config: VibeLlmConfig containing runtime knobs (e.g., timeout).
+            config: VibeConfig containing runtime knobs (e.g., timeout).
             logger (ConsoleLogger): Logger instance for logging.
 
         """

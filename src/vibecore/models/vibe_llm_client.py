@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from google import genai
+from models.vibe_config import VibeConfig
 from openai import OpenAI
 
 from vibecore.llms.gemini_wrapper import GeminiWrapper
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.llms.openai_wrapper import OpenAiWrapper
 from vibecore.models.exceptions import VibeLlmClientException
-from vibecore.models.vibe_llm_config import VibeLlmConfig
 from vibecore.utils.logger import ConsoleLogger
 
 if TYPE_CHECKING:
@@ -33,23 +33,23 @@ class VibeLlmClient(LlmWrapper):
     Internally, it dispatches to the appropriate wrapper implementation.
     """
 
-    def __init__(self, client: SharedClient, model: str, config: VibeLlmConfig, logger: ConsoleLogger):
+    def __init__(self, client: SharedClient, model: str, config: VibeConfig, logger: ConsoleLogger):
         """
         Initialize the VibeLlmClient with a backend client.
 
         Args:
             client (SharedClient): Either an instance of `openai.OpenAI` or `google.genai.Client`.
             model (str): The name of the LLM model to use (e.g., "gpt-4", "gemini-pro").
-            config (VibeLlmConfig): Configuration options such as retry behavior.
+            config (VibeConfig): Configuration options such as retry behavior.
             logger (ConsoleLogger): Logger instance for logging.
 
         Raises:
             VibeLlmClientException: If the provided client is not a supported type.
 
         """
-        # normalize config to vibellmconfig if is dict or none
+        # normalize config to vibeconfig if is dict or none
         if isinstance(config, dict) or config is None:
-            config = VibeLlmConfig(**(config or {}))
+            config = VibeConfig(**(config or {}))
 
         # initialize llm based on client type
         if isinstance(client, OpenAI):
