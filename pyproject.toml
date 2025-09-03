@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 include = ["src/vibecore/**"]
 
 [tool.hatch.build.targets.wheel.sources]
-"src/vibecore" = ""
+"src" = ""
 
 [tool.hatch.envs.default.scripts]
 lint = "darglint ./src && ruff check --fix ./src && black --check ./src"
