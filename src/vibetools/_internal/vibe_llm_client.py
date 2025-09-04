@@ -9,7 +9,7 @@ from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
 from vibetools.config.vibe_config import VibeConfig
-from vibetools.exceptions.exceptions import VibeLlmClientException
+from vibetools.exceptions import VibeInputTypeException, VibeLlmClientException
 from vibetools.llms.gemini_wrapper import GeminiWrapper
 from vibetools.llms.llm_wrapper import LlmWrapper
 from vibetools.llms.openai_wrapper import OpenAiWrapper
@@ -79,5 +79,11 @@ class VibeLlmClient(LlmWrapper):
         Returns:
             Any: Raw text if return_type is None; otherwise, the coerced value.
 
+        Raises:
+            VibeInputTypeException: If the prompt is not a string.
+
         """
+        if not isinstance(prompt, str):
+            raise VibeInputTypeException("Argument must be a string")
+
         return self._run_with_timeout(self.llm.vibe_eval, self.config.timeout, prompt, return_type)
