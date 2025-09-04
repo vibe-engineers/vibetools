@@ -1,8 +1,11 @@
 """A wrapper for the Gemini API."""
 
-from typing import Any
+from __future__ import annotations
 
-from google import genai
+from typing import TYPE_CHECKING, Any, Optional, Type
+
+if TYPE_CHECKING:
+    from google import genai
 
 from vibetools._internal.logger import ConsoleLogger
 from vibetools.config.vibe_config import VibeConfig
@@ -32,8 +35,6 @@ class GeminiWrapper(LlmWrapper):
         self.model = model
         self.config = config
 
-    from typing import Optional, Type
-
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
         Evaluate a free-form prompt with Gemini and optionally coerce the response.
@@ -60,7 +61,7 @@ class GeminiWrapper(LlmWrapper):
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=prompt,
-                config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
+                config={"system_instruction": self._eval_statement_instruction},
             )
 
             raw_text = (getattr(response, "text", None) or "").strip()

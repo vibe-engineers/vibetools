@@ -1,8 +1,11 @@
 """A wrapper for the OpenAI API."""
 
-from typing import Any, Optional, Type
+from __future__ import annotations
 
-from openai import OpenAI
+from typing import TYPE_CHECKING, Any, Optional, Type
+
+if TYPE_CHECKING:
+    from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
 from vibetools.config.vibe_config import VibeConfig

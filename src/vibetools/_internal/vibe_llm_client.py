@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Type
 
-from google import genai
-from openai import OpenAI
-
 from vibetools._internal.logger import ConsoleLogger
 from vibetools.config.vibe_config import VibeConfig
 from vibetools.exceptions import VibeInputTypeException, VibeLlmClientException
@@ -19,7 +16,18 @@ if TYPE_CHECKING:
     from google import genai
     from openai import OpenAI
 
-SharedClient = OpenAI | genai.Client
+    SharedClient = OpenAI | genai.Client
+
+# runtime ports for instance checks
+try:
+    from openai import OpenAI as _OpenAI
+except Exception:
+    _OpenAI = None
+
+try:
+    from google import genai as _genai
+except Exception:
+    _genai = None
 
 
 class VibeLlmClient(LlmWrapper):
@@ -54,10 +62,10 @@ class VibeLlmClient(LlmWrapper):
         self.config = config
 
         # initialize llm based on client type
-        if isinstance(client, OpenAI):
+        if _OpenAI is not None and isinstance(client, _OpenAI):
             self.llm = OpenAiWrapper(client, model, config, logger)
             logger.info(f"Loaded OpenAI wrapper with model: {model}")
-        elif isinstance(client, genai.Client):
+        elif _genai is not None and isinstance(client, _genai.Client):
             self.llm = GeminiWrapper(client, model, config, logger)
             logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
