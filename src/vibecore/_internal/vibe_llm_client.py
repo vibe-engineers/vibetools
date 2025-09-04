@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Optional, Type
 from google import genai
 from openai import OpenAI
 
+from vibecore._internal.logger import ConsoleLogger
 from vibecore.llms.gemini_wrapper import GeminiWrapper
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.llms.openai_wrapper import OpenAiWrapper
 from vibecore.models.exceptions import VibeLlmClientException
 from vibecore.models.vibe_config import VibeConfig
-from vibecore.utils.logger import ConsoleLogger
 
 if TYPE_CHECKING:
 

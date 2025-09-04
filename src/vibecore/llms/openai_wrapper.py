@@ -4,10 +4,10 @@ from typing import Any, Optional, Type
 
 from openai import OpenAI
 
+from vibecore._internal.logger import ConsoleLogger
 from vibecore.llms.llm_wrapper import LlmWrapper
 from vibecore.models.exceptions import VibeLlmApiException, VibeResponseParseException
 from vibecore.models.vibe_config import VibeConfig
-from vibecore.utils.logger import ConsoleLogger
 
 
 class OpenAiWrapper(LlmWrapper):
