@@ -10,7 +10,7 @@ import threading
 from abc import ABC
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
-from typing import Any, Optional, get_args, get_origin
+from typing import Any, Optional, Type, get_args, get_origin
 
 from vibetools.exceptions.exceptions import VibeTimeoutException
 
@@ -89,8 +89,6 @@ class LlmWrapper(ABC):
         # If the function returned None explicitly, result_queue may be empty.
         return result_queue.get_nowait() if not result_queue.empty() else None
 
-    from typing import Any, Optional, Type
-
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
         Evaluate a free-form prompt with LLM and optionally coerce the response.
@@ -104,12 +102,8 @@ class LlmWrapper(ABC):
             return_type (Optional[Type]): The expected Python type for coercion. If None,
                 the raw text is returned.
 
-        Returns:
-            Any: Raw text if return_type is None; otherwise, the coerced value.
-
         Raises:
-            VibeResponseParseException: If coercion is requested but fails.
-            VibeLlmApiException: If the LLM API call fails.
+            NotImplementedError: This is an abstract method and must be implemented in subclasses.
 
         """
         raise NotImplementedError
@@ -121,6 +115,14 @@ class LlmWrapper(ABC):
     def _maybe_coerce(self, raw_text: str, expected: Optional[type]) -> Any:
         """
         Attempt to coerce raw LLM text into `expected` when appropriate.
+
+        Args:
+            raw_text (str): The raw text response from the LLM.
+            expected (Optional[type]): The expected Python type, or None.
+
+        Returns:
+            Any: The coerced value if successful; otherwise, the original raw_text.
+
         """
         if not expected:
             self.logger.debug("_maybe_coerce: no expected type; returning raw_text unchanged")

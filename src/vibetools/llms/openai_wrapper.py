@@ -5,9 +5,9 @@ from typing import Any, Optional, Type
 from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
-from vibetools.llms.llm_wrapper import LlmWrapper
-from vibetools.exceptions.exceptions import VibeLlmApiException, VibeResponseParseException
 from vibetools.config.vibe_config import VibeConfig
+from vibetools.exceptions.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibetools.llms.llm_wrapper import LlmWrapper
 
 
 class OpenAiWrapper(LlmWrapper):

@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Any, Optional, Type
 
 from google import genai
 from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
+from vibetools.config.vibe_config import VibeConfig
+from vibetools.exceptions.exceptions import VibeLlmClientException
 from vibetools.llms.gemini_wrapper import GeminiWrapper
 from vibetools.llms.llm_wrapper import LlmWrapper
 from vibetools.llms.openai_wrapper import OpenAiWrapper
-from vibetools.exceptions.exceptions import VibeLlmClientException
-from vibetools.config.vibe_config import VibeConfig
 
 if TYPE_CHECKING:
 
@@ -63,7 +63,7 @@ class VibeLlmClient(LlmWrapper):
         else:
             raise VibeLlmClientException("Client must be an instance of openai.OpenAI or google.genai.Client")
 
-    def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> bool:
+    def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
         Evaluate a free-form prompt with LLM and optionally coerce the response.
 
@@ -78,10 +78,6 @@ class VibeLlmClient(LlmWrapper):
 
         Returns:
             Any: Raw text if return_type is None; otherwise, the coerced value.
-
-        Raises:
-            VibeResponseParseException: If coercion is requested but fails.
-            VibeLlmApiException: If the LLM API call fails.
 
         """
         return self._run_with_timeout(self.llm.vibe_eval, self.config.timeout, prompt, return_type)

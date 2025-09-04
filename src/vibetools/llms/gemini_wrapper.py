@@ -5,12 +5,12 @@ from typing import Any
 from google import genai
 
 from vibetools._internal.logger import ConsoleLogger
-from vibetools.llms.llm_wrapper import LlmWrapper
+from vibetools.config.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import (
     VibeLlmApiException,
     VibeResponseParseException,
 )
-from vibetools.config.vibe_config import VibeConfig
+from vibetools.llms.llm_wrapper import LlmWrapper
 
 
 class GeminiWrapper(LlmWrapper):

@@ -1,5 +1,6 @@
 """VibeTools: Core components for vibe-based libraries."""
 
+from vibetools.config.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import (
     VibeInputTypeException,
     VibeLlmApiException,
@@ -7,7 +8,6 @@ from vibetools.exceptions.exceptions import (
     VibeResponseParseException,
     VibeTimeoutException,
 )
-from vibetools.config.vibe_config import VibeConfig
 
 __all__ = [
     "VibeConfig",
