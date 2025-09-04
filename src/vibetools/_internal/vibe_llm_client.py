@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Optional, Type
 from google import genai
 from openai import OpenAI
 
-from vibecore._internal.logger import ConsoleLogger
-from vibecore.llms.gemini_wrapper import GeminiWrapper
-from vibecore.llms.llm_wrapper import LlmWrapper
-from vibecore.llms.openai_wrapper import OpenAiWrapper
-from vibecore.models.exceptions import VibeLlmClientException
-from vibecore.models.vibe_config import VibeConfig
+from vibetools._internal.logger import ConsoleLogger
+from vibetools.llms.gemini_wrapper import GeminiWrapper
+from vibetools.llms.llm_wrapper import LlmWrapper
+from vibetools.llms.openai_wrapper import OpenAiWrapper
+from vibetools.models.exceptions import VibeLlmClientException
+from vibetools.models.vibe_config import VibeConfig
 
 if TYPE_CHECKING:
 
@@ -61,7 +61,8 @@ class VibeLlmClient(LlmWrapper):
             self.llm = GeminiWrapper(client, model, config, logger)
             logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
-            raise VibeLlmClientException("Client must be an instance of openai.OpenAI or google.genai.Client")
+            raise VibeLlmClientException(
+                "Client must be an instance of openai.OpenAI or google.genai.Client")
 
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> bool:
         """

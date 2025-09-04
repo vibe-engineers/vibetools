@@ -1,27 +1,24 @@
-"""A wrapper for the Gemini API."""
+"""A wrapper for the OpenAI API."""
 
-from typing import Any
+from typing import Any, Optional, Type
 
-from google import genai
+from openai import OpenAI
 
-from vibecore._internal.logger import ConsoleLogger
-from vibecore.llms.llm_wrapper import LlmWrapper
-from vibecore.models.exceptions import (
-    VibeLlmApiException,
-    VibeResponseParseException,
-)
-from vibecore.models.vibe_config import VibeConfig
+from vibetools._internal.logger import ConsoleLogger
+from vibetools.llms.llm_wrapper import LlmWrapper
+from vibetools.models.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibetools.models.vibe_config import VibeConfig
 
 
-class GeminiWrapper(LlmWrapper):
-    """A wrapper for the Gemini API."""
+class OpenAiWrapper(LlmWrapper):
+    """A wrapper for the OpenAI API."""
 
-    def __init__(self, client: genai.Client, model: str, config: VibeConfig, logger: ConsoleLogger):
+    def __init__(self, client: OpenAI, model: str, config: VibeConfig, logger: ConsoleLogger):
         """
-        Initialize the Gemini wrapper.
+        Initialize the OpenAI wrapper.
 
         Args:
-            client: The Gemini client.
+            client: The OpenAI client.
             model: The model to use.
             config: VibeConfig containing runtime knobs (e.g., timeout).
             logger (ConsoleLogger): Logger instance for logging.
@@ -31,8 +28,6 @@ class GeminiWrapper(LlmWrapper):
         self.client = client
         self.model = model
         self.config = config
-
-    from typing import Optional, Type
 
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
@@ -57,13 +52,13 @@ class GeminiWrapper(LlmWrapper):
         """
         try:
             self.logger.debug(f"Performing vibe_eval with prompt: {prompt!r}")
-            response = self.client.models.generate_content(
+            response = self.client.responses.create(
                 model=self.model,
-                contents=prompt,
-                config=genai.types.GenerateContentConfig(system_instruction=self._eval_statement_instruction),
+                instructions=self._eval_statement_instruction,
+                input=prompt,
             )
 
-            raw_text = (getattr(response, "text", None) or "").strip()
+            raw_text = (getattr(response, "output_text", None) or "").strip()
             self.logger.debug(f"Raw response: {raw_text!r}")
 
             if return_type is None:

@@ -1,13 +1,13 @@
-"""VibeCore: Core components for vibe-based libraries."""
+"""VibeTools: Core components for vibe-based libraries."""
 
-from vibecore.models.exceptions import (
+from vibetools.models.exceptions import (
     VibeInputTypeException,
     VibeLlmApiException,
     VibeLlmClientException,
     VibeResponseParseException,
     VibeTimeoutException,
 )
-from vibecore.models.vibe_config import VibeConfig
+from vibetools.models.vibe_config import VibeConfig
 
 __all__ = [
     "VibeConfig",

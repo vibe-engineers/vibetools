@@ -12,7 +12,7 @@ from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, get_args, get_origin
 
-from vibecore.models.exceptions import VibeTimeoutException
+from vibetools.models.exceptions import VibeTimeoutException
 
 
 class LlmWrapper(ABC):
@@ -39,7 +39,7 @@ class LlmWrapper(ABC):
 
         """
         # safe default so abstract classes can log without a child-provided logger
-        self.logger = logger or logging.getLogger("VibeCore")
+        self.logger = logger or logging.getLogger("vibetools")
 
     def _run_with_timeout(self, func, timeout, *args, **kwargs):
         """

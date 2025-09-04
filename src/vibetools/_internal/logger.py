@@ -8,7 +8,7 @@ import logging
 import os
 
 # define defaults/read from environment
-LOGGER_PREFIX = "VibeCore"
+LOGGER_PREFIX = "VibeTools"
 LOGGER_FORMAT = "[%(name)s] %(levelname)s: %(message)s"
 LOGGER_LEVEL = os.getenv("VIBE_LOG_LEVEL", "ERROR").upper()
 

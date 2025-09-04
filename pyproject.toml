@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["src/vibecore/**"]
+include = ["src/vibetools/**"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src" = ""
@@ -11,7 +11,7 @@ include = ["src/vibecore/**"]
 [tool.hatch.envs.default.scripts]
 lint = "darglint ./src && ruff check --fix ./src && black --check ./src"
 format = "ruff check --fix ./src && black ./src"
-test = "pytest ./tests/test_vibecore.py"
+test = "pytest ./tests/test_vibetools.py"
 
 [tool.pytest.ini_options]
 pythonpath = [
@@ -19,13 +19,13 @@ pythonpath = [
 ]
 
 [project]
-name = "vibecore"
+name = "vibetools"
 version = "0.1.0"
 authors = [
   { name="tjtanjin", email="cjtanjin@gmail.com" },
   { name="konglyyy", email="kongleyi99@gmail.com" },
 ]
-description = "Core modules shared across vibekit libraries."
+description = "Core modules shared across vibe-engineers libraries."
 readme = "README.md"
 requires-python = ">=3.0"
 classifiers = [
@@ -35,8 +35,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vibekit/vibecore"
-Issues = "https://github.com/vibekit/vibecore/issues"
+Homepage = "https://github.com/vibe-engineers/vibetools"
+Issues = "https://github.com/vibe-engineers/vibetools/issues"
 
 [tool.ruff]
 line-length = 120
