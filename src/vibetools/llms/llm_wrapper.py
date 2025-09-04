@@ -84,7 +84,6 @@ class LlmWrapper(ABC):
         if not exception_queue.empty():
             exc = exception_queue.get()
             # Raise a documented Exception type and keep original as __cause__
-            print(exc)
             raise Exception("Exception occurred in target function") from exc
 
         # If the function returned None explicitly, result_queue may be empty.

@@ -11,7 +11,7 @@ include = ["src/vibetools/**"]
 [tool.hatch.envs.default.scripts]
 lint = "darglint ./src && ruff check --fix ./src && black --check ./src"
 format = "ruff check --fix ./src && black ./src"
-test = "pytest ./tests/test_vibetools.py"
+test = "pytest ./tests"
 
 [tool.pytest.ini_options]
 pythonpath = [

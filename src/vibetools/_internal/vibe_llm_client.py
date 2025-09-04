@@ -61,8 +61,7 @@ class VibeLlmClient(LlmWrapper):
             self.llm = GeminiWrapper(client, model, config, logger)
             logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
-            raise VibeLlmClientException(
-                "Client must be an instance of openai.OpenAI or google.genai.Client")
+            raise VibeLlmClientException("Client must be an instance of openai.OpenAI or google.genai.Client")
 
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> bool:
         """
