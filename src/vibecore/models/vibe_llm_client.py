@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Type
 
 from google import genai
 from openai import OpenAI
@@ -63,43 +63,25 @@ class VibeLlmClient(LlmWrapper):
         else:
             raise VibeLlmClientException("Client must be an instance of openai.OpenAI or google.genai.Client")
 
-    def vibe_eval_statement(self, statement: str) -> bool:
+    def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> bool:
         """
-        Evaluate whether the given statement is true or false using the LLM.
+        Evaluate a free-form prompt with LLM and optionally coerce the response.
+
+        - If return_type is None, returns the raw model text (no parsing/formatting).
+        - If return_type is a Python type (e.g., str, int, list, dict), the response is
+          coerced and validated with the shared helpers.
 
         Args:
-            statement (str): A natural-language statement to be evaluated.
+            prompt (str): The prompt to send to the model.
+            return_type (Optional[Type]): The expected Python type for coercion. If None,
+                the raw text is returned.
 
         Returns:
-            bool: True if the model determines the statement is true, False otherwise.
+            Any: Raw text if return_type is None; otherwise, the coerced value.
+
+        Raises:
+            VibeResponseParseException: If coercion is requested but fails.
+            VibeLlmApiException: If the LLM API call fails.
 
         """
-        return self._run_with_timeout(
-            self.llm.vibe_eval_statement,
-            self.config.timeout,
-            statement,
-        )
-
-    def vibe_call_function(self, func_signature, docstring: str, *args, **kwargs):
-        """
-        Use the LLM to simulate or infer the return value of a function.
-
-        Args:
-            func_signature (inspect.Signature): The function's Python signature.
-            docstring (str): The function's documentation string.
-            *args: Positional arguments to include in the function call.
-            **kwargs: Keyword arguments to include in the function call.
-
-        Returns:
-            Any: The model's best guess at the return value, potentially coerced into the
-                 expected Python return type.
-
-        """
-        return self._run_with_timeout(
-            self.llm.vibe_call_function,
-            self.config.timeout,
-            func_signature,
-            docstring,
-            *args,
-            **kwargs,
-        )
+        return self._run_with_timeout(self.llm.vibe_eval, self.config.timeout, prompt, return_type)

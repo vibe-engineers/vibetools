@@ -18,7 +18,7 @@ from vibecore.models.exceptions import VibeTimeoutException
 class LlmWrapper(ABC):
     """Abstract base class for LLM wrappers."""
 
-    _eval_statement_instruction = "Evaluate the statement below and respond with either 'true' or 'false'."
+    _eval_statement_instruction = "Evaluate the statement below and respond with either 'True' or 'False'."
     _call_function_instruction = (
         "You will be given: a function signature (name, parameters, and return type); "
         "a docstring describing what the function is intended to do; "
@@ -84,6 +84,7 @@ class LlmWrapper(ABC):
         if not exception_queue.empty():
             exc = exception_queue.get()
             # Raise a documented Exception type and keep original as __cause__
+            print(exc)
             raise Exception("Exception occurred in target function") from exc
 
         # If the function returned None explicitly, result_queue may be empty.
@@ -97,7 +98,7 @@ class LlmWrapper(ABC):
 
         - If return_type is None, returns the raw model text (no parsing/formatting).
         - If return_type is a Python type (e.g., str, int, list, dict), the response is
-          coerced and validated with the same helpers used in `vibe_call_function`.
+          coerced and validated with the shared helpers.
 
         Args:
             prompt (str): The prompt to send to the model.
@@ -121,23 +122,6 @@ class LlmWrapper(ABC):
     def _maybe_coerce(self, raw_text: str, expected: Optional[type]) -> Any:
         """
         Attempt to coerce raw LLM text into `expected` when appropriate.
-
-        Fast paths:
-            - If `expected` is falsy or `str`, return `raw_text` unchanged.
-
-        Otherwise:
-            - Try JSON parse; on failure, return `raw_text` (validation will fail upstream).
-            - If `expected` is a dataclass and parsed is dict, construct from overlapping keys.
-            - If `expected` is a Pydantic BaseModel (if available) and parsed is dict, construct via model(**parsed).
-            - For typing containers (list[T], dict[K, V]), return parsed JSON and let `_is_match` validate.
-
-        Args:
-            raw_text: The raw text returned by the LLM.
-            expected: The expected Python type, or None.
-
-        Returns:
-            The coerced value when possible, otherwise the original raw_text or parsed JSON.
-
         """
         if not expected:
             self.logger.debug("_maybe_coerce: no expected type; returning raw_text unchanged")
@@ -146,6 +130,33 @@ class LlmWrapper(ABC):
             self.logger.debug("_maybe_coerce: expected is str; returning raw_text unchanged")
             return raw_text
 
+        # --- Minimal addition: primitive fast-paths (bool/int/float) ---
+        if expected in (bool, int, float) and isinstance(raw_text, str):
+            s = raw_text.strip()
+            if expected is bool:
+                low = s.lower()
+                if low in {"true", "t", "yes", "y", "1"}:
+                    self.logger.debug("_maybe_coerce: primitive bool fast-path → True")
+                    return True
+                if low in {"false", "f", "no", "n", "0"}:
+                    self.logger.debug("_maybe_coerce: primitive bool fast-path → False")
+                    return False
+                # fall through if not a known boolean literal
+
+            try:
+                if expected is int:
+                    v = int(s)
+                    self.logger.debug("_maybe_coerce: primitive int fast-path")
+                    return v
+                if expected is float:
+                    v = float(s)
+                    self.logger.debug("_maybe_coerce: primitive float fast-path")
+                    return v
+            except Exception:
+                # not a plain numeric literal; fall through to JSON
+                pass
+        # --- end minimal addition ---
+
         # Only parse JSON when a non-str type is requested.
         try:
             parsed = json.loads(raw_text)
@@ -153,6 +164,37 @@ class LlmWrapper(ABC):
         except Exception as e:
             self.logger.debug(f"_maybe_coerce: JSON parse failed: {e}; returning raw_text")
             return raw_text
+
+        # --- Minimal addition: post-JSON nudge for primitives ---
+        if expected is bool:
+            if isinstance(parsed, bool):
+                return parsed
+            if isinstance(parsed, str):
+                low = parsed.strip().lower()
+                if low in {"true", "t", "yes", "y", "1"}:
+                    self.logger.debug("_maybe_coerce: post-JSON bool coercion → True")
+                    return True
+                if low in {"false", "f", "no", "n", "0"}:
+                    self.logger.debug("_maybe_coerce: post-JSON bool coercion → False")
+                    return False
+            if isinstance(parsed, (int, float)) and parsed in (0, 1):
+                self.logger.debug("_maybe_coerce: post-JSON numeric→bool coercion")
+                return bool(parsed)
+
+        if expected is int and isinstance(parsed, str):
+            try:
+                self.logger.debug("_maybe_coerce: post-JSON str→int coercion")
+                return int(parsed.strip())
+            except Exception:
+                pass
+
+        if expected is float and isinstance(parsed, str):
+            try:
+                self.logger.debug("_maybe_coerce: post-JSON str→float coercion")
+                return float(parsed.strip())
+            except Exception:
+                pass
+        # --- end minimal addition ---
 
         # Dataclasses
         if inspect.isclass(expected) and is_dataclass(expected) and isinstance(parsed, dict):

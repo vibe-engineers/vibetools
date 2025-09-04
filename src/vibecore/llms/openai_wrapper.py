@@ -35,7 +35,7 @@ class OpenAiWrapper(LlmWrapper):
 
         - If return_type is None, returns the raw model text (no parsing/formatting).
         - If return_type is a Python type (e.g., str, int, list, dict), the response is
-          coerced and validated with the same helpers used in `vibe_call_function`.
+          coerced and validated with the shared helpers.
 
         Args:
             prompt (str): The prompt to send to the model.
