@@ -1,7 +1,6 @@
 """A wrapper for the OpenAI API."""
 
-import inspect
-from typing import Any
+from typing import Any, Optional, Type
 
 from openai import OpenAI
 
@@ -30,94 +29,47 @@ class OpenAiWrapper(LlmWrapper):
         self.model = model
         self.config = config
 
-    def vibe_eval_statement(self, statement: str) -> bool:
+    def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
-        Evaluate a statement and returns a boolean.
+        Evaluate a free-form prompt with Gemini and optionally coerce the response.
+
+        - If return_type is None, returns the raw model text (no parsing/formatting).
+        - If return_type is a Python type (e.g., str, int, list, dict), the response is
+          coerced and validated with the same helpers used in `vibe_call_function`.
 
         Args:
-            statement: The statement to evaluate.
+            prompt (str): The prompt to send to the model.
+            return_type (Optional[Type]): The expected Python type for coercion. If None,
+                the raw text is returned.
 
         Returns:
-            A boolean indicating whether the statement is true or false.
+            Any: Raw text if return_type is None; otherwise, the coerced value.
 
         Raises:
-            VibeResponseParseException: If the API is unable to provide a boolean response.
-            VibeLlmApiException: If the LLM API returns an error.
+            VibeResponseParseException: If coercion is requested but fails.
+            VibeLlmApiException: If the LLM API call fails.
 
         """
         try:
-            self.logger.debug(f"Performing statement evaluation: {statement}")
+            self.logger.debug(f"Performing vibe_eval with prompt: {prompt!r}")
             response = self.client.responses.create(
                 model=self.model,
                 instructions=self._eval_statement_instruction,
-                input=statement,
-            )
-
-            output_text = (getattr(response, "output_text", None) or "").lower().strip()
-            self.logger.debug(f"Response: {output_text!r}")
-
-            if "true" in output_text:
-                return True
-            if "false" in output_text:
-                return False
-            raise VibeResponseParseException("Unable to parse response to expected bool type.")
-        except Exception as e:
-            raise VibeLlmApiException(f"Unable to evaluate statement: {e}")
-
-    def vibe_call_function(self, func_signature: inspect.signature, docstring: str, *args, **kwargs) -> Any:
-        """
-        Call a function and return the LLM-evaluated result.
-
-        Builds a structured prompt from the provided signature, docstring, and arguments,
-        queries the OpenAI API, and optionally enforces the output's Python type.
-
-        Args:
-            func_signature (inspect.signature): The function signature being invoked.
-            docstring (str): The function's docstring used to give additional context to the model.
-            *args: Positional arguments to include in the call.
-            **kwargs: Keyword arguments to include in the call.
-
-        Returns:
-            Any: If return type is not found in the function signature, defaults to str.
-            Otherwise, returns the value coerced to the return type on success.
-
-        Raises:
-            VibeResponseParseException: If the model fails to produce a valid response matching
-                the return type (when specified).
-            VibeLlmApiException: If the LLM API returns an error.
-
-        """
-        if func_signature.return_annotation is inspect.Signature.empty:
-            return_type = None
-        else:
-            return_type = func_signature.return_annotation
-        return_type_line = f"\nReturn Type: {return_type}" if return_type else ""
-        prompt = f"""
-        Function Signature: {func_signature}
-        Docstring: {docstring}
-        Arguments: {args}, {kwargs}{return_type_line}
-        """.strip()
-
-        try:
-            self.logger.debug(f"Performing function call: {prompt}")
-            response = self.client.responses.create(
-                model=self.model,
-                instructions=self._call_function_instruction,
                 input=prompt,
             )
 
             raw_text = (getattr(response, "output_text", None) or "").strip()
-            self.logger.debug(f"Function call raw response: {raw_text!r}")
+            self.logger.debug(f"Raw response: {raw_text!r}")
 
-            # if no return type was specified, default to string
             if return_type is None:
                 return raw_text
 
-            # otherwise, enforce the type with shared helpers.
             value = self._maybe_coerce(raw_text, return_type)
             if self._is_match(value, return_type):
                 return value
 
             raise VibeResponseParseException(f"Unable to parse response to expected {return_type!r} type.")
+        except VibeResponseParseException:
+            raise
         except Exception as e:
-            raise VibeLlmApiException(f"Unable to call function: {e}")
+            raise VibeLlmApiException(f"Unable to evaluate prompt: {e}")

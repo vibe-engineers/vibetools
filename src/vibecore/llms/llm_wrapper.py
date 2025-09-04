@@ -7,7 +7,7 @@ import json
 import logging
 import queue
 import threading
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, get_args, get_origin
@@ -89,39 +89,27 @@ class LlmWrapper(ABC):
         # If the function returned None explicitly, result_queue may be empty.
         return result_queue.get_nowait() if not result_queue.empty() else None
 
-    @abstractmethod
-    def vibe_eval_statement(self, statement: str) -> bool:
+    from typing import Any, Optional, Type
+
+    def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
-        Evaluate a statement and returns a boolean.
+        Evaluate a free-form prompt with LLM and optionally coerce the response.
+
+        - If return_type is None, returns the raw model text (no parsing/formatting).
+        - If return_type is a Python type (e.g., str, int, list, dict), the response is
+          coerced and validated with the same helpers used in `vibe_call_function`.
 
         Args:
-            statement: The statement to evaluate.
+            prompt (str): The prompt to send to the model.
+            return_type (Optional[Type]): The expected Python type for coercion. If None,
+                the raw text is returned.
 
         Returns:
-            A boolean indicating whether the statement is true or false.
+            Any: Raw text if return_type is None; otherwise, the coerced value.
 
         Raises:
-            VibeResponseParseException: If the model does not return a valid parsed response.
-
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def vibe_call_function(self, func_signature: inspect.signature, docstring: str, *args, **kwargs) -> Any:
-        """
-        Call a function and returns the result.
-
-        Args:
-            func_signature: The function signature.
-            docstring: The function's docstring.
-            *args: The function's arguments.
-            **kwargs: The function's keyword arguments.
-
-        Returns:
-            The result of the function call.
-
-        Raises:
-            VibeResponseParseException: If the model does not return a valid parsed response.
+            VibeResponseParseException: If coercion is requested but fails.
+            VibeLlmApiException: If the LLM API call fails.
 
         """
         raise NotImplementedError
