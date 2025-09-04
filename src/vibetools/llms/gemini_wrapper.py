@@ -6,11 +6,11 @@ from google import genai
 
 from vibetools._internal.logger import ConsoleLogger
 from vibetools.llms.llm_wrapper import LlmWrapper
-from vibetools.models.exceptions import (
+from vibetools.exceptions.exceptions import (
     VibeLlmApiException,
     VibeResponseParseException,
 )
-from vibetools.models.vibe_config import VibeConfig
+from vibetools.config.vibe_config import VibeConfig
 
 
 class GeminiWrapper(LlmWrapper):

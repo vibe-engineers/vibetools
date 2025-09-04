@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock
 from dataclasses import dataclass
 from vibetools.llms.llm_wrapper import LlmWrapper, _dataclass_field_names
-from vibetools.models.exceptions import VibeTimeoutException
+from vibetools.exceptions.exceptions import VibeTimeoutException
 
 # A concrete implementation of the abstract LlmWrapper for testing
 class ConcreteLlmWrapper(LlmWrapper):

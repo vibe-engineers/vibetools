@@ -1,4 +1,4 @@
-"""VibeTools: Core components for vibe-based libraries."""
+"""Common exceptions for all libraries."""
 
 from vibetools.exceptions.exceptions import (
     VibeInputTypeException,
@@ -7,13 +7,11 @@ from vibetools.exceptions.exceptions import (
     VibeResponseParseException,
     VibeTimeoutException,
 )
-from vibetools.config.vibe_config import VibeConfig
 
 __all__ = [
-    "VibeConfig",
+    "VibeInputTypeException",
+    "VibeLlmApiException",
     "VibeLlmClientException",
     "VibeResponseParseException",
-    "VibeLlmApiException",
-    "VibeInputTypeException",
     "VibeTimeoutException",
 ]

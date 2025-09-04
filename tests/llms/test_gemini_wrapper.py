@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, PropertyMock
 from vibetools.llms.gemini_wrapper import GeminiWrapper
-from vibetools.models.vibe_config import VibeConfig
-from vibetools.models.exceptions import VibeResponseParseException, VibeLlmApiException
+from vibetools.config.vibe_config import VibeConfig
+from vibetools.exceptions.exceptions import VibeResponseParseException, VibeLlmApiException
 from google import genai
 
 

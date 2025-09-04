@@ -11,8 +11,8 @@ from vibetools._internal.logger import ConsoleLogger
 from vibetools.llms.gemini_wrapper import GeminiWrapper
 from vibetools.llms.llm_wrapper import LlmWrapper
 from vibetools.llms.openai_wrapper import OpenAiWrapper
-from vibetools.models.exceptions import VibeLlmClientException
-from vibetools.models.vibe_config import VibeConfig
+from vibetools.exceptions.exceptions import VibeLlmClientException
+from vibetools.config.vibe_config import VibeConfig
 
 if TYPE_CHECKING:
 

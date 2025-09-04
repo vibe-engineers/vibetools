@@ -1,4 +1,4 @@
-"""Additional configurations for VibeCheck."""
+"""Additional configurations for all libraries."""
 
 from dataclasses import dataclass
 

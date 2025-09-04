@@ -12,7 +12,7 @@ from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, get_args, get_origin
 
-from vibetools.models.exceptions import VibeTimeoutException
+from vibetools.exceptions.exceptions import VibeTimeoutException
 
 
 class LlmWrapper(ABC):

@@ -1,4 +1,4 @@
-from vibetools.models.vibe_config import VibeConfig
+from vibetools.config.vibe_config import VibeConfig
 
 def test_vibe_config_defaults():
     config = VibeConfig()

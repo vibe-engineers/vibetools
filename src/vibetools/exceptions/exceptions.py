@@ -1,4 +1,4 @@
-"""Custom exceptions for the vibecheck library."""
+"""Custom exceptions for the vibetools library."""
 
 
 class VibeLlmClientException(Exception):

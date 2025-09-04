@@ -6,8 +6,8 @@ from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
 from vibetools.llms.llm_wrapper import LlmWrapper
-from vibetools.models.exceptions import VibeLlmApiException, VibeResponseParseException
-from vibetools.models.vibe_config import VibeConfig
+from vibetools.exceptions.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibetools.config.vibe_config import VibeConfig
 
 
 class OpenAiWrapper(LlmWrapper):
