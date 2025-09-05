@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from google import genai
 
 from vibetools._internal.logger import ConsoleLogger
-from vibetools.config.vibe_config import VibeConfig
+from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import (
     VibeLlmApiException,
     VibeResponseParseException,
@@ -61,7 +61,7 @@ class GeminiWrapper(LlmWrapper):
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=prompt,
-                config={"system_instruction": self._eval_statement_instruction},
+                config={"system_instruction": self.config.system_instruction},
             )
 
             raw_text = (getattr(response, "text", None) or "").strip()

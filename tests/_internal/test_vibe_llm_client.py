@@ -6,7 +6,7 @@ from openai import OpenAI
 
 from vibetools._internal.vibe_llm_client import VibeLlmClient
 from vibetools.exceptions.exceptions import VibeLlmClientException, VibeTimeoutException
-from vibetools.config.vibe_config import VibeConfig
+from vibetools._internal.vibe_config import VibeConfig
 
 
 @pytest.fixture

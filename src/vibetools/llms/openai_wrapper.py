@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
-from vibetools.config.vibe_config import VibeConfig
+from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import VibeLlmApiException, VibeResponseParseException
 from vibetools.llms.llm_wrapper import LlmWrapper
 
@@ -57,7 +57,7 @@ class OpenAiWrapper(LlmWrapper):
             self.logger.debug(f"Performing vibe_eval with prompt: {prompt!r}")
             response = self.client.responses.create(
                 model=self.model,
-                instructions=self._eval_statement_instruction,
+                instructions=self.config.system_instruction,
                 input=prompt,
             )
 

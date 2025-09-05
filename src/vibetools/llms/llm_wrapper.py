@@ -18,18 +18,6 @@ from vibetools.exceptions.exceptions import VibeTimeoutException
 class LlmWrapper(ABC):
     """Abstract base class for LLM wrappers."""
 
-    _eval_statement_instruction = "Evaluate the statement below and respond with either 'True' or 'False'."
-    _call_function_instruction = (
-        "You will be given: a function signature (name, parameters, and return type); "
-        "a docstring describing what the function is intended to do; "
-        "the concrete arguments passed to the function; and the declared return value type. "
-        "Your task is to: (1) interpret the docstring to understand the intended behavior of the function, "
-        "(2) use the provided arguments to simulate what the function would logically produce, "
-        "(3) ensure your response strictly matches the declared return type, both in structure and data type, and "
-        "(4) return only the value that fulfills the function’s contract, "
-        "with no explanations, commentary, or extra text."
-    )
-
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the LLM wrapper.

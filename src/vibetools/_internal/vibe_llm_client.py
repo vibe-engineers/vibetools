@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Optional, Type
 
 from vibetools._internal.logger import ConsoleLogger
-from vibetools.config.vibe_config import VibeConfig
+from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions import VibeInputTypeException, VibeLlmClientException
 from vibetools.llms.gemini_wrapper import GeminiWrapper
 from vibetools.llms.llm_wrapper import LlmWrapper

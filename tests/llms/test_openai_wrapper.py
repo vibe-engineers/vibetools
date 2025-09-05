@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, PropertyMock
 from vibetools.llms.openai_wrapper import OpenAiWrapper
-from vibetools.config.vibe_config import VibeConfig
+from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import VibeResponseParseException, VibeLlmApiException
 
 @pytest.fixture
@@ -10,7 +10,8 @@ def mock_openai_client():
 
 @pytest.fixture
 def config():
-    return VibeConfig()
+    return VibeConfig(system_instruction="You are a test assistant.")
+
 
 @pytest.fixture
 def logger():
@@ -50,3 +51,16 @@ def test_vibe_eval_api_exception(wrapper, mock_openai_client):
 
     with pytest.raises(VibeLlmApiException):
         wrapper.vibe_eval("test prompt")
+
+
+def test_system_instruction_is_passed(wrapper, mock_openai_client):
+    mock_response = MagicMock()
+    type(mock_response).output_text = PropertyMock(return_value="raw text")
+    mock_openai_client.responses.create.return_value = mock_response
+
+    wrapper.vibe_eval("test prompt")
+    wrapper.client.responses.create.assert_called_once_with(
+        model="test_model",
+        instructions="You are a test assistant.",
+        input="test prompt",
+    )

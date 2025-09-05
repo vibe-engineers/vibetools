@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, PropertyMock
 from vibetools.llms.gemini_wrapper import GeminiWrapper
-from vibetools.config.vibe_config import VibeConfig
+from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import VibeResponseParseException, VibeLlmApiException
 from google import genai
 
@@ -12,7 +12,8 @@ def mock_gemini_client():
 
 @pytest.fixture
 def config():
-    return VibeConfig()
+    return VibeConfig(system_instruction="You are a test assistant.")
+
 
 @pytest.fixture
 def logger():
@@ -52,3 +53,16 @@ def test_vibe_eval_api_exception(wrapper, mock_gemini_client):
 
     with pytest.raises(VibeLlmApiException):
         wrapper.vibe_eval("test prompt")
+
+
+def test_system_instruction_is_passed(wrapper, mock_gemini_client):
+    mock_response = MagicMock()
+    type(mock_response).text = PropertyMock(return_value="raw text")
+    mock_gemini_client.models.generate_content.return_value = mock_response
+
+    wrapper.vibe_eval("test prompt")
+    wrapper.client.models.generate_content.assert_called_once_with(
+        model="test_model",
+        contents="test prompt",
+        config={"system_instruction": "You are a test assistant."},
+    )
