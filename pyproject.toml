@@ -20,7 +20,7 @@ pythonpath = [
 
 [project]
 name = "vibetools"
-version = "1.0.2"
+version = "1.0.3"
 authors = [
   { name="vibe-engineers", email="vibe.engineers.team@gmail.com" },
   { name="tjtanjin", email="cjtanjin@gmail.com" },
