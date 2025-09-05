@@ -95,7 +95,7 @@ Config and logging:
 ## Extending: Adding a New Provider
 
 1) Create a new wrapper in `src/llms/<provider>_wrapper.py`:
-   - Subclass `LlmWrapper`.
+   - Subclass `VibeBaseLlm`.
    - Implement `vibe_eval_statement(self, statement: str) -> bool` and `vibe_call_function(self, func_signature, docstring, *args, **kwargs) -> Any` using that provider’s SDK.
    - Reuse `self._eval_statement_instruction` and `self._call_function_instruction` for consistent prompts.
 2) Update the facade in `src/vibechecks.py` to recognize the new client type and instantiate your wrapper.
@@ -129,7 +129,7 @@ def midpoint(a: tuple[int, int], b: tuple[int, int]) -> Point:
 print(midpoint((0, 0), (2, 2)))  # -> Point(x=1, y=1)
 ```
 
-Under the hood, the wrapper asks the LLM to return only the value. `LlmWrapper._maybe_coerce` JSON-parses and constructs `Point`, then `_is_match` verifies types.
+Under the hood, the wrapper asks the LLM to return only the value. `VibeBaseLlm._maybe_coerce` JSON-parses and constructs `Point`, then `_is_match` verifies types.
 
 ## Tooling
 

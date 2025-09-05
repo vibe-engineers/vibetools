@@ -15,7 +15,7 @@ from typing import Any, Optional, Type, get_args, get_origin
 from vibetools.exceptions.exceptions import VibeTimeoutException
 
 
-class LlmWrapper(ABC):
+class VibeBaseLlm(ABC):
     """Abstract base class for LLM wrappers."""
 
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:

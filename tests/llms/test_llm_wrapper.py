@@ -1,17 +1,17 @@
 import pytest
 from unittest.mock import MagicMock
 from dataclasses import dataclass
-from vibetools.llms.llm_wrapper import LlmWrapper, _dataclass_field_names
+from vibetools.llms.vibe_base_llm import VibeBaseLlm, _dataclass_field_names
 from vibetools.exceptions.exceptions import VibeTimeoutException
 
-# A concrete implementation of the abstract LlmWrapper for testing
-class ConcreteLlmWrapper(LlmWrapper):
+# A concrete implementation of the abstract VibeBaseLlm for testing
+class ConcreteVibeBaseLlm(VibeBaseLlm):
     def vibe_eval(self, prompt: str, return_type=None):
         pass  # Not needed for these tests
 
 @pytest.fixture
 def wrapper():
-    return ConcreteLlmWrapper(logger=MagicMock())
+    return ConcreteVibeBaseLlm(logger=MagicMock())
 
 def test_run_with_timeout_success(wrapper):
     def target_func():

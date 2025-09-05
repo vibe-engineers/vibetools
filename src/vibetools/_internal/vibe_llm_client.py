@@ -8,8 +8,8 @@ from vibetools._internal.logger import ConsoleLogger
 from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions import VibeInputTypeException, VibeLlmClientException
 from vibetools.llms.gemini_wrapper import GeminiWrapper
-from vibetools.llms.llm_wrapper import LlmWrapper
 from vibetools.llms.openai_wrapper import OpenAiWrapper
+from vibetools.llms.vibe_base_llm import VibeBaseLlm
 
 if TYPE_CHECKING:
 
@@ -30,12 +30,12 @@ except Exception:
     _genai = None
 
 
-class VibeLlmClient(LlmWrapper):
+class VibeLlmClient(VibeBaseLlm):
     """
     Public entrypoint for consumers.
 
     This class abstracts away the specific LLM client (OpenAI or Gemini),
-    and exposes a consistent interface that implements LlmWrapper.
+    and exposes a consistent interface that implements VibeBaseLlm.
 
     Consumers instantiate this class with a model name, a config, and an LLM client.
     Internally, it dispatches to the appropriate wrapper implementation.

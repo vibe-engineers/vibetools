@@ -13,10 +13,10 @@ from vibetools.exceptions.exceptions import (
     VibeLlmApiException,
     VibeResponseParseException,
 )
-from vibetools.llms.llm_wrapper import LlmWrapper
+from vibetools.llms.vibe_base_llm import VibeBaseLlm
 
 
-class GeminiWrapper(LlmWrapper):
+class GeminiWrapper(VibeBaseLlm):
     """A wrapper for the Gemini API."""
 
     def __init__(self, client: genai.Client, model: str, config: VibeConfig, logger: ConsoleLogger):

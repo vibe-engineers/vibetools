@@ -10,10 +10,10 @@ if TYPE_CHECKING:
 from vibetools._internal.logger import ConsoleLogger
 from vibetools._internal.vibe_config import VibeConfig
 from vibetools.exceptions.exceptions import VibeLlmApiException, VibeResponseParseException
-from vibetools.llms.llm_wrapper import LlmWrapper
+from vibetools.llms.vibe_base_llm import VibeBaseLlm
 
 
-class OpenAiWrapper(LlmWrapper):
+class OpenAiWrapper(VibeBaseLlm):
     """A wrapper for the OpenAI API."""
 
     def __init__(self, client: OpenAI, model: str, config: VibeConfig, logger: ConsoleLogger):
