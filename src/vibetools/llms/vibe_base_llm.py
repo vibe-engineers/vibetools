@@ -10,7 +10,7 @@ import threading
 from abc import ABC
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
-from typing import Any, Optional, Type, get_args, get_origin
+from typing import Any, Optional, Type, get_args, get_origin, get_type_hints
 
 from vibetools.exceptions.exceptions import VibeTimeoutException
 
@@ -185,6 +185,28 @@ class VibeBaseLlm(ABC):
                 pass
         # --- end minimal addition ---
 
+        # --- Minimal addition: TypedDict handling ---
+        if _is_typed_dict(expected) and isinstance(parsed, dict):
+            try:
+                ann = get_type_hints(expected)
+            except Exception:
+                ann = getattr(expected, "__annotations__", {}) or {}
+            required_keys = set(getattr(expected, "__required_keys__", set()))
+            # Keep only annotated keys
+            subset = {k: v for k, v in parsed.items() if k in ann}
+            # Ensure required keys exist
+            if not required_keys.issubset(subset.keys()):
+                self.logger.debug(
+                    "_maybe_coerce: TypedDict missing required keys; returning parsed dict"
+                )
+                return parsed
+            self.logger.debug(
+                f"_maybe_coerce: constructing TypedDict {getattr(expected, '__name__', str(expected))} "
+                f"from {len(subset)}/{len(parsed)} keys"
+            )
+            return subset
+        # --- end minimal addition ---
+
         # Dataclasses
         if inspect.isclass(expected) and is_dataclass(expected) and isinstance(parsed, dict):
             try:
@@ -259,6 +281,29 @@ class VibeBaseLlm(ABC):
             except Exception:
                 # pydantic not available; continue
                 pass
+
+            # --- Minimal addition: TypedDict validation ---
+            if _is_typed_dict(expected):
+                if not isinstance(value, dict):
+                    self.logger.debug("_is_match: expected=TypedDict; value is not dict; match=False")
+                    return False
+                try:
+                    ann = get_type_hints(expected)
+                except Exception:
+                    ann = getattr(expected, "__annotations__", {}) or {}
+                required_keys = set(getattr(expected, "__required_keys__", set()))
+                # Required keys must be present
+                if not required_keys.issubset(value.keys()):
+                    self.logger.debug("_is_match: TypedDict required keys missing; match=False")
+                    return False
+                # For keys we know about, validate their types recursively
+                for k, t in ann.items():
+                    if k in value and not self._is_match(value[k], t):
+                        self.logger.debug(f"_is_match: TypedDict field '{k}' type mismatch; match=False")
+                        return False
+                self.logger.debug("_is_match: TypedDict validation passed; match=True")
+                return True
+            # --- end minimal addition ---
 
             if is_dataclass(expected):
                 ok = isinstance(value, expected)
@@ -336,3 +381,17 @@ def _dataclass_field_names(dc: type) -> set[str]:
 
     """
     return {f.name for f in fields(dc)}
+
+
+def _is_typed_dict(tp: Any) -> bool:
+    """
+    Lightweight runtime check for typing.TypedDict classes.
+    Relies on attributes added by the TypedDict metaclass.
+    Args:
+        tp: The type to check.
+
+    Returns:
+        bool: True if tp is a TypedDict class, False otherwise.
+    """
+    return isinstance(tp, type) and hasattr(tp, "__annotations__") and hasattr(tp, "__required_keys__") and hasattr(tp, "__optional_keys__")
+
