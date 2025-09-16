@@ -9,7 +9,6 @@
   <a href="https://pypi.org/project/vibetools/"><img src="https://img.shields.io/pypi/pyversions/vibetools.svg" /></a>
   <a href="https://github.com/vibe-engineers/vibetools/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/vibetools.svg" /></a>
   <a href="https://pepy.tech/project/vibetools"><img src="https://pepy.tech/badge/vibetools" /></a>
-  <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a>
 </p>
 
 ## Table of Contents

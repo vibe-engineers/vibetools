@@ -196,9 +196,7 @@ class VibeBaseLlm(ABC):
             subset = {k: v for k, v in parsed.items() if k in ann}
             # Ensure required keys exist
             if not required_keys.issubset(subset.keys()):
-                self.logger.debug(
-                    "_maybe_coerce: TypedDict missing required keys; returning parsed dict"
-                )
+                self.logger.debug("_maybe_coerce: TypedDict missing required keys; returning parsed dict")
                 return parsed
             self.logger.debug(
                 f"_maybe_coerce: constructing TypedDict {getattr(expected, '__name__', str(expected))} "
@@ -387,11 +385,17 @@ def _is_typed_dict(tp: Any) -> bool:
     """
     Lightweight runtime check for typing.TypedDict classes.
     Relies on attributes added by the TypedDict metaclass.
+
     Args:
         tp: The type to check.
 
     Returns:
         bool: True if tp is a TypedDict class, False otherwise.
-    """
-    return isinstance(tp, type) and hasattr(tp, "__annotations__") and hasattr(tp, "__required_keys__") and hasattr(tp, "__optional_keys__")
 
+    """
+    return (
+        isinstance(tp, type)
+        and hasattr(tp, "__annotations__")
+        and hasattr(tp, "__required_keys__")
+        and hasattr(tp, "__optional_keys__")
+    )
