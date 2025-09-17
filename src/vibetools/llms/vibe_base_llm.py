@@ -7,27 +7,36 @@ import json
 import logging
 import queue
 import threading
-from abc import ABC
+import time
+from abc import ABC, abstractmethod
 from dataclasses import fields, is_dataclass
 from functools import lru_cache
 from typing import Any, Optional, Type, get_args, get_origin, get_type_hints
 
-from vibetools.exceptions.exceptions import VibeTimeoutException
+from vibetools._internal.vibe_config import VibeConfig
+from vibetools._internal.vibe_mode import VibeMode
+from vibetools.exceptions.exceptions import (
+    VibeLlmApiException,
+    VibeResponseParseException,
+    VibeTimeoutException,
+)
 
 
 class VibeBaseLlm(ABC):
     """Abstract base class for LLM wrappers."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, config: VibeConfig, logger: Optional[logging.Logger] = None) -> None:
         """
         Initialize the LLM wrapper.
 
         Args:
+            config (VibeConfig): Configuration options such as retry behavior.
             logger (Optional[logging.Logger]): Logger instance for logging.
 
         """
         # safe default so abstract classes can log without a child-provided logger
         self.logger = logger or logging.getLogger("vibetools")
+        self.config = config
 
     def _run_with_timeout(self, func, timeout, *args, **kwargs):
         """
@@ -80,7 +89,6 @@ class VibeBaseLlm(ABC):
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
         Evaluate a free-form prompt with LLM and optionally coerce the response.
-
         - If return_type is None, returns the raw model text (no parsing/formatting).
         - If return_type is a Python type (e.g., str, int, list, dict), the response is
           coerced and validated with the shared helpers.
@@ -90,8 +98,60 @@ class VibeBaseLlm(ABC):
             return_type (Optional[Type]): The expected Python type for coercion. If None,
                 the raw text is returned.
 
+        Returns:
+            Any: Raw text if return_type is None; otherwise, the coerced value.
+
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented in subclasses.
+            VibeResponseParseException: If coercion is requested but fails.
+            last_exception: If the LLM API call fails.
+
+        """
+        retry_counts = {
+            VibeMode.CHILL: 0,
+            VibeMode.EAGER: 1,
+            VibeMode.AGGRESSIVE: 2,
+        }
+        max_retries = retry_counts.get(self.config.vibe_mode, 0)
+        last_exception = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                raw_text = self._vibe_eval_llm(prompt)
+                self.logger.debug(f"Raw response: {raw_text!r}")
+
+                if return_type is None:
+                    return raw_text
+
+                value = self._maybe_coerce(raw_text, return_type)
+                if self._is_match(value, return_type):
+                    return value
+
+                raise VibeResponseParseException(f"Unable to parse response to expected {return_type!r} type.")
+            except (VibeLlmApiException, VibeResponseParseException) as e:
+                last_exception = e
+                self.logger.info(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < max_retries:
+                    time.sleep(1)
+            except Exception as e:
+                last_exception = VibeLlmApiException(f"An unexpected error occurred: {e}")
+                self.logger.error(f"Attempt {attempt + 1} failed with an unexpected error: {e}")
+                if attempt < max_retries:
+                    time.sleep(1)
+
+        raise last_exception
+
+    @abstractmethod
+    def _vibe_eval_llm(self, prompt: str) -> str:
+        """
+        Abstract method for language model evaluation.
+        This method should be implemented by subclasses to perform the actual
+        evaluation of the prompt using the specific language model.
+
+        Args:
+            prompt (str): The prompt to be evaluated.
+
+        Returns:
+            str: The raw text response from the language model.
 
         """
         raise NotImplementedError

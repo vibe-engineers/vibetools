@@ -53,10 +53,11 @@ def test_vibe_eval_timeout(mock_openai_client, config, logger):
 
         def long_running_eval(*args, **kwargs):
             import time
-
             time.sleep(0.2)
+            return ""
 
-        mock_wrapper.return_value.vibe_eval.side_effect = long_running_eval
+        # mock the internal _vibe_eval_llm method of the wrapper
+        mock_wrapper.return_value._vibe_eval_llm.side_effect = long_running_eval
         client = VibeLlmClient(mock_openai_client, "gpt-4", config, logger)
         with pytest.raises(VibeTimeoutException):
             client.vibe_eval("test prompt")
@@ -64,8 +65,10 @@ def test_vibe_eval_timeout(mock_openai_client, config, logger):
 
 def test_vibe_eval_success(mock_openai_client, config, logger):
     with patch("vibetools._internal.vibe_llm_client.OpenAiWrapper") as mock_wrapper:
-        mock_wrapper.return_value.vibe_eval.return_value = "success"
+        # mock the return of the internal method to be a raw string
+        mock_wrapper.return_value._vibe_eval_llm.return_value = 'success'
         client = VibeLlmClient(mock_openai_client, "gpt-4", config, logger)
-        result = client.vibe_eval("test prompt")
+        result = client.vibe_eval("test prompt", return_type=str)
         assert result == "success"
-        client.llm.vibe_eval.assert_called_once_with("test prompt", None)
+        # check if the internal method was called.
+        client.llm._vibe_eval_llm.assert_called_once_with("test prompt")

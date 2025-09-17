@@ -55,11 +55,10 @@ class VibeLlmClient(VibeBaseLlm):
             VibeLlmClientException: If the provided client is not a supported type.
 
         """
-        super().__init__(logger)
-        # normalize config to vibeconfig if is dict or none and set config
+        # normalize config to vibeconfig if is dict or none
         if isinstance(config, dict) or config is None:
             config = VibeConfig(**(config or {}))
-        self.config = config
+        super().__init__(config, logger)
 
         # initialize llm based on client type
         if _OpenAI is not None and isinstance(client, _OpenAI):
@@ -70,6 +69,9 @@ class VibeLlmClient(VibeBaseLlm):
             logger.info(f"Loaded Gemini wrapper with model: {model}")
         else:
             raise VibeLlmClientException("Client must be an instance of openai.OpenAI or google.genai.Client")
+
+    def _vibe_eval_llm(self, prompt: str) -> str:
+        return self.llm._vibe_eval_llm(prompt)
 
     def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
         """
@@ -94,4 +96,4 @@ class VibeLlmClient(VibeBaseLlm):
         if not isinstance(prompt, str):
             raise VibeInputTypeException("Argument must be a string")
 
-        return self._run_with_timeout(self.llm.vibe_eval, self.config.timeout, prompt, return_type)
+        return self._run_with_timeout(super().vibe_eval, self.config.timeout, prompt, return_type)

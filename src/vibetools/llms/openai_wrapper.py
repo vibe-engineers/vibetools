@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from openai import OpenAI
 
 from vibetools._internal.logger import ConsoleLogger
 from vibetools._internal.vibe_config import VibeConfig
-from vibetools.exceptions.exceptions import VibeLlmApiException, VibeResponseParseException
+from vibetools.exceptions.exceptions import VibeLlmApiException
 from vibetools.llms.vibe_base_llm import VibeBaseLlm
 
 
@@ -27,52 +27,31 @@ class OpenAiWrapper(VibeBaseLlm):
             logger (ConsoleLogger): Logger instance for logging.
 
         """
-        super().__init__(logger=logger)
+        super().__init__(config, logger=logger)
         self.client = client
         self.model = model
-        self.config = config
 
-    def vibe_eval(self, prompt: str, return_type: Optional[Type] = None) -> Any:
+    def _vibe_eval_llm(self, prompt: str) -> str:
         """
-        Evaluate a free-form prompt with Gemini and optionally coerce the response.
-
-        - If return_type is None, returns the raw model text (no parsing/formatting).
-        - If return_type is a Python type (e.g., str, int, list, dict), the response is
-          coerced and validated with the shared helpers.
+        Evaluate a free-form prompt with OpenAI and return the raw text response.
 
         Args:
             prompt (str): The prompt to send to the model.
-            return_type (Optional[Type]): The expected Python type for coercion. If None,
-                the raw text is returned.
 
         Returns:
-            Any: Raw text if return_type is None; otherwise, the coerced value.
+            str: The raw text response from the model.
 
         Raises:
-            VibeResponseParseException: If coercion is requested but fails.
             VibeLlmApiException: If the LLM API call fails.
 
         """
         try:
-            self.logger.debug(f"Performing vibe_eval with prompt: {prompt!r}")
+            self.logger.debug(f"Performing _vibe_eval_llm with prompt: {prompt!r}")
             response = self.client.responses.create(
                 model=self.model,
                 instructions=self.config.system_instruction,
                 input=prompt,
             )
-
-            raw_text = (getattr(response, "output_text", None) or "").strip()
-            self.logger.debug(f"Raw response: {raw_text!r}")
-
-            if return_type is None:
-                return raw_text
-
-            value = self._maybe_coerce(raw_text, return_type)
-            if self._is_match(value, return_type):
-                return value
-
-            raise VibeResponseParseException(f"Unable to parse response to expected {return_type!r} type.")
-        except VibeResponseParseException:
-            raise
+            return (getattr(response, "output_text", None) or "").strip()
         except Exception as e:
             raise VibeLlmApiException(f"Unable to evaluate prompt: {e}")

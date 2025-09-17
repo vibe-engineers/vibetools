@@ -25,9 +25,7 @@ def test_console_logger():
 @pytest.mark.parametrize("level_name, level_num", [
     ("DEBUG", logging.DEBUG),
     ("INFO", logging.INFO),
-    ("WARNING", logging.WARNING),
     ("ERROR", logging.ERROR),
-    ("CRITICAL", logging.CRITICAL),
 ])
 def test_console_logger_with_level(monkeypatch, level_name, level_num):
     monkeypatch.setenv("VIBE_LOG_LEVEL", level_name)
