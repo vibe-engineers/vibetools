@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## v1.0.4 (17-09-2025)
+
+**Fixed:**
+- Fixed an issue with validating return types for typed dict
+
+**Added:**
+- Added a new `vibe_mode` configuration to `VibeConfig` which can be "CHILL", "EAGER" or "AGGRESSIVE" (more information [**here**](https://github.com/vibe-engineers/vibetools/wiki/Tutorial#vibeconfig))
+
 ## v1.0.3 (06-09-2025)
 
 **Miscellaneous:**
